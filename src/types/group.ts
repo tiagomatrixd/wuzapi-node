@@ -1,0 +1,95 @@
+// Group endpoints types
+
+export interface GroupParticipant {
+  IsAdmin: boolean;
+  IsSuperAdmin: boolean;
+  JID: string;
+}
+
+export interface GroupInfo {
+  AnnounceVersionID: string;
+  DisappearingTimer: number;
+  GroupCreated: string;
+  IsAnnounce: boolean;
+  IsEphemeral: boolean;
+  IsLocked: boolean;
+  JID: string;
+  Name: string;
+  NameSetAt: string;
+  NameSetBy: string;
+  OwnerJID: string;
+  ParticipantVersionID: string;
+  Participants: GroupParticipant[];
+  Topic: string;
+  TopicID: string;
+  TopicSetAt: string;
+  TopicSetBy: string;
+}
+
+export interface GroupListResponse {
+  Groups: GroupInfo[];
+}
+
+export interface GroupInviteLinkRequest {
+  GroupJID: string;
+}
+
+export interface GroupInviteLinkResponse {
+  InviteLink: string;
+}
+
+export interface GroupInfoRequest {
+  GroupJID: string;
+}
+
+export interface GroupPhotoRequest {
+  GroupJID: string;
+  Image: string; // base64 encoded JPEG
+}
+
+export interface GroupPhotoResponse {
+  Details: string;
+  PictureID: string;
+}
+
+export interface GroupNameRequest {
+  GroupJID: string;
+  Name: string;
+}
+
+export interface GroupNameResponse {
+  Details: string;
+}
+
+export interface GroupCreateRequest {
+  name: string;
+  participants: string[];
+}
+
+export type GroupCreateResponse = GroupInfo;
+
+export interface GroupLockedRequest {
+  groupjid: string;
+  locked: boolean;
+}
+
+export interface GroupLockedResponse {
+  Details: string;
+}
+
+export interface GroupEphemeralRequest {
+  groupjid: string;
+  duration: "24h" | "7d" | "90d" | "off";
+}
+
+export interface GroupEphemeralResponse {
+  Details: string;
+}
+
+export interface GroupPhotoRemoveRequest {
+  groupjid: string;
+}
+
+export interface GroupPhotoRemoveResponse {
+  Details: string;
+}
