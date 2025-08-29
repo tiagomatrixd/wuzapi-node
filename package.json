@@ -1,6 +1,6 @@
 {
   "name": "wuzapi",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "TypeScript client library for WuzAPI WhatsApp API",
   "type": "module",
   "main": "./dist/index.js",
@@ -42,7 +42,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/wuzapi.git"
+    "url": "https://github.com/gusnips/wuzapi-node.git"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
