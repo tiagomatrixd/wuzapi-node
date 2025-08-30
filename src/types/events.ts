@@ -3,6 +3,107 @@
 
 import { Message } from "./message.js";
 
+// Event types enum for all possible WhatsApp events
+export enum EventType {
+  // Core message and communication events
+  MESSAGE = "Message",
+  RECEIPT = "Receipt",
+  PRESENCE = "Presence",
+  CHAT_PRESENCE = "ChatPresence",
+
+  // Connection and session events
+  CONNECTED = "Connected",
+  DISCONNECTED = "Disconnected",
+  LOGGED_OUT = "LoggedOut",
+  QR = "QR",
+  QR_SCANNED_WITHOUT_MULTIDEVICE = "QRScannedWithoutMultidevice",
+  PAIR_SUCCESS = "PairSuccess",
+  PAIR_ERROR = "PairError",
+  MANUAL_LOGIN_RECONNECT = "ManualLoginReconnect",
+  KEEP_ALIVE_RESTORED = "KeepAliveRestored",
+  KEEP_ALIVE_TIMEOUT = "KeepAliveTimeout",
+
+  // Group events
+  GROUP_INFO = "GroupInfo",
+  JOINED_GROUP = "JoinedGroup",
+
+  // Contact and user events
+  CONTACT = "Contact",
+  PUSH_NAME = "PushName",
+  PUSH_NAME_SETTING = "PushNameSetting",
+  PICTURE = "Picture",
+  USER_ABOUT = "UserAbout",
+  USER_STATUS_MUTE = "UserStatusMute",
+  PRIVACY_SETTINGS = "PrivacySettings",
+
+  // App state and sync events
+  APP_STATE = "AppState",
+  APP_STATE_SYNC_COMPLETE = "AppStateSyncComplete",
+  HISTORY_SYNC = "HistorySync",
+  OFFLINE_SYNC_COMPLETED = "OfflineSyncCompleted",
+  OFFLINE_SYNC_PREVIEW = "OfflineSyncPreview",
+  IDENTITY_CHANGE = "IdentityChange",
+
+  // Chat management events
+  ARCHIVE = "Archive",
+  UNARCHIVE_CHATS_SETTING = "UnarchiveChatsSetting",
+  CLEAR_CHAT = "ClearChat",
+  DELETE_CHAT = "DeleteChat",
+  DELETE_FOR_ME = "DeleteForMe",
+  MARK_CHAT_AS_READ = "MarkChatAsRead",
+  MUTE = "Mute",
+  PIN = "Pin",
+  STAR = "Star",
+
+  // Label events
+  LABEL_ASSOCIATION_CHAT = "LabelAssociationChat",
+  LABEL_ASSOCIATION_MESSAGE = "LabelAssociationMessage",
+  LABEL_EDIT = "LabelEdit",
+
+  // Media events
+  MEDIA_RETRY = "MediaRetry",
+  MEDIA_RETRY_ERROR = "MediaRetryError",
+
+  // Newsletter events
+  NEWSLETTER_JOIN = "NewsletterJoin",
+  NEWSLETTER_LEAVE = "NewsletterLeave",
+  NEWSLETTER_LIVE_UPDATE = "NewsletterLiveUpdate",
+  NEWSLETTER_MESSAGE_META = "NewsletterMessageMeta",
+  NEWSLETTER_MUTE_CHANGE = "NewsletterMuteChange",
+
+  // Error and system events
+  UNDECRYPTABLE_MESSAGE = "UndecryptableMessage",
+  STREAM_ERROR = "StreamError",
+  STREAM_REPLACED = "StreamReplaced",
+  CONNECT_FAILURE = "ConnectFailure",
+  CLIENT_OUTDATED = "ClientOutdated",
+  TEMPORARY_BAN = "TemporaryBan",
+  CAT_REFRESH_ERROR = "CATRefreshError",
+  PERMANENT_DISCONNECT = "PermanentDisconnect",
+
+  // Blocklist events
+  BLOCKLIST = "Blocklist",
+  BLOCKLIST_ACTION = "BlocklistAction",
+  BLOCKLIST_CHANGE = "BlocklistChange",
+
+  // Business events
+  BUSINESS_NAME = "BusinessName",
+
+  // Call events
+  CALL_ACCEPT = "CallAccept",
+  CALL_OFFER = "CallOffer",
+  CALL_OFFER_NOTICE = "CallOfferNotice",
+  CALL_PRE_ACCEPT = "CallPreAccept",
+  CALL_REJECT = "CallReject",
+  CALL_RELAY_LATENCY = "CallRelayLatency",
+  CALL_TERMINATE = "CallTerminate",
+  CALL_TRANSPORT = "CallTransport",
+  UNKNOWN_CALL_EVENT = "UnknownCallEvent",
+
+  // FB/Meta specific events
+  FB_MESSAGE = "FBMessage",
+}
+
 // Additional specific types from whatsmeow
 export interface WaBinaryNode {
   Tag: string;

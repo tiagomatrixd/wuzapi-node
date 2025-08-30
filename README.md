@@ -301,11 +301,128 @@ console.log("Subscribed events:", webhookConfig.subscribe);
 
 WuzAPI sends real-time events to your webhook endpoint. Here's how to handle different types of events:
 
+## Webhook Payload Structure
+
+When S3 is enabled, webhook payloads will include S3 information based on the `media_delivery` setting configured in your WuzAPI instance.
+
+### Standard Event Payload
+
+```json
+{
+  "event": {
+    "Info": {
+      "ID": "3EB06F9067F80BAB89FF",
+      "Type": "text",
+      "PushName": "John Doe",
+      "Timestamp": "2024-12-25T10:30:00Z",
+      "Source": {
+        "Chat": "5491155553934@s.whatsapp.net",
+        "Sender": "5491155553934@s.whatsapp.net",
+        "IsFromMe": false,
+        "IsGroup": false
+      }
+    },
+    "Message": {
+      "conversation": "Hello, this is a test message!"
+    },
+    "IsEphemeral": false,
+    "IsViewOnce": false,
+    "IsDocumentWithCaption": false,
+    "IsEdit": false
+  }
+}
+```
+
+### S3 Only (`media_delivery: "s3"`)
+
+```json
+{
+  "event": {
+    "Info": {
+      "ID": "3EB06F9067F80BAB89FF",
+      "Type": "image",
+      "PushName": "John Doe",
+      "Timestamp": "2024-12-25T10:30:00Z",
+      "Source": {
+        "Chat": "5491155553934@s.whatsapp.net",
+        "Sender": "5491155553934@s.whatsapp.net",
+        "IsFromMe": false,
+        "IsGroup": false
+      }
+    },
+    "Message": {
+      "imageMessage": {
+        "caption": "Check out this photo!",
+        "mimetype": "image/jpeg",
+        "width": 1920,
+        "height": 1080,
+        "fileLength": 245632
+      }
+    },
+    "IsEphemeral": false,
+    "IsViewOnce": false
+  },
+  "s3": {
+    "url": "https://my-bucket.s3.us-east-1.amazonaws.com/users/abc123/inbox/5491155553934/2024/12/25/images/3EB06F9067F80BAB89FF.jpg",
+    "key": "users/abc123/inbox/5491155553934/2024/12/25/images/3EB06F9067F80BAB89FF.jpg",
+    "bucket": "my-bucket",
+    "size": 245632,
+    "mimeType": "image/jpeg",
+    "fileName": "3EB06F9067F80BAB89FF.jpg"
+  }
+}
+```
+
+### Both S3 and Base64 (`media_delivery: "both"`)
+
+```json
+{
+  "event": {
+    "Info": { "..." },
+    "Message": {
+      "imageMessage": {
+        "caption": "Check out this photo!",
+        "mimetype": "image/jpeg",
+        "width": 1920,
+        "height": 1080
+      }
+    }
+  },
+  "base64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=",
+  "mimeType": "image/jpeg",
+  "fileName": "3EB06F9067F80BAB89FF.jpg",
+  "s3": {
+    "url": "https://my-bucket.s3.us-east-1.amazonaws.com/users/abc123/inbox/5491155553934/2024/12/25/images/3EB06F9067F80BAB89FF.jpg",
+    "key": "users/abc123/inbox/5491155553934/2024/12/25/images/3EB06F9067F80BAB89FF.jpg",
+    "bucket": "my-bucket",
+    "size": 245632,
+    "mimeType": "image/jpeg",
+    "fileName": "3EB06F9067F80BAB89FF.jpg"
+  }
+}
+```
+
+### Base64 Only (`media_delivery: "base64"`)
+
+```json
+{
+  "event": { "..." },
+  "base64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=",
+  "mimeType": "image/jpeg",
+  "fileName": "3EB06F9067F80BAB89FF.jpg"
+}
+```
+
 ### Basic Webhook Setup
 
 ```typescript
 import express from "express";
-import WuzapiClient from "wuzapi";
+import WuzapiClient, {
+  EventType,
+  hasS3Media,
+  hasBase64Media,
+  WebhookPayload,
+} from "wuzapi";
 
 const app = express();
 app.use(express.json());
@@ -315,18 +432,43 @@ const client = new WuzapiClient({
   token: "your-token",
 });
 
-// Webhook endpoint
+// Webhook endpoint with S3 media support
 app.post("/webhook", async (req, res) => {
   try {
-    const event = req.body;
+    const webhookPayload: WebhookPayload = req.body;
 
-    // Handle different event types
-    if (event.Message) {
-      await handleMessage(event);
-    } else if (event.MessageIDs && event.Type) {
-      await handleReceipt(event);
-    } else if (event.From && typeof event.Unavailable !== "undefined") {
-      await handlePresence(event);
+    // Handle S3 media information if present
+    if (hasS3Media(webhookPayload)) {
+      console.log("☁️ S3 Media:", {
+        url: webhookPayload.s3.url,
+        bucket: webhookPayload.s3.bucket,
+        size: webhookPayload.s3.size,
+        type: webhookPayload.s3.mimeType,
+      });
+    }
+
+    if (hasBase64Media(webhookPayload)) {
+      console.log("📦 Base64 media included");
+      // Process base64 media: webhookPayload.base64
+    }
+
+    // Extract the actual event data
+    const event = webhookPayload.event || webhookPayload;
+    const eventType = detectEventType(event);
+
+    // Handle different event types using EventType enum
+    switch (eventType) {
+      case EventType.MESSAGE:
+        await handleMessage(event);
+        break;
+      case EventType.RECEIPT:
+        await handleReceipt(event);
+        break;
+      case EventType.PRESENCE:
+        await handlePresence(event);
+        break;
+      default:
+        console.log(`Unhandled event type: ${eventType}`);
     }
 
     res.status(200).json({ success: true });
@@ -335,6 +477,18 @@ app.post("/webhook", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Helper function to detect event type
+function detectEventType(event: any): EventType | string {
+  if (event.Message && event.Info) return EventType.MESSAGE;
+  if (event.MessageIDs && event.Type) return EventType.RECEIPT;
+  if (event.From && typeof event.Unavailable !== "undefined")
+    return EventType.PRESENCE;
+  if (event.State && event.MessageSource) return EventType.CHAT_PRESENCE;
+  if (event.Codes) return EventType.QR;
+  // Add more detection logic as needed
+  return "Unknown";
+}
 
 app.listen(3000, () => {
   console.log("Webhook server running on port 3000");
@@ -823,23 +977,23 @@ app.get("/health", (req, res) => {
 // Initialize
 async function initialize() {
   try {
-    // Connect to WhatsApp with all events
+    // Connect to WhatsApp with all events using EventType enum
     await client.session.connect({
       Subscribe: [
-        "Message",
-        "ReadReceipt",
-        "Presence",
-        "ChatPresence",
-        "GroupInfo",
-        "Contact",
-        "PushName",
-        "Picture",
-        "QR",
-        "Connected",
-        "Disconnected",
-        "LoggedOut",
-        "UndecryptableMessage",
-        "StreamError",
+        EventType.MESSAGE,
+        EventType.RECEIPT,
+        EventType.PRESENCE,
+        EventType.CHAT_PRESENCE,
+        EventType.GROUP_INFO,
+        EventType.CONTACT,
+        EventType.PUSH_NAME,
+        EventType.PICTURE,
+        EventType.QR,
+        EventType.CONNECTED,
+        EventType.DISCONNECTED,
+        EventType.LOGGED_OUT,
+        EventType.UNDECRYPTABLE_MESSAGE,
+        EventType.STREAM_ERROR,
       ],
       Immediate: false,
     });
@@ -868,6 +1022,9 @@ All webhook events are fully typed. Import the specific event types you need:
 
 ```typescript
 import {
+  // Event type enum for all possible events
+  EventType,
+
   // Core message types
   Message,
   MessageEvent,
@@ -887,6 +1044,16 @@ import {
   PollCreationMessage,
   ReactionMessage,
 
+  // Webhook payload types
+  WebhookPayload,
+  S3MediaInfo,
+  S3OnlyWebhookPayload,
+  Base64OnlyWebhookPayload,
+  BothMediaWebhookPayload,
+  hasS3Media,
+  hasBase64Media,
+  hasBothMedia,
+
   // Event types
   Receipt,
   Presence,
@@ -904,32 +1071,63 @@ import {
   WhatsAppEvent,
 } from "wuzapi";
 
-// Type-safe event handling with full message structure
-async function handleTypedMessage(event: MessageEvent) {
-  const messageContent = getMessageContent(event.Message);
+// Type-safe event handling with EventType enum
+async function handleTypedWebhook(webhookPayload: WebhookPayload) {
+  const event = webhookPayload.event;
 
-  if (messageContent?.type === "image") {
-    // TypeScript knows this is an ImageMessage
-    const imageMsg: ImageMessage = messageContent.content;
-    console.log(`Image dimensions: ${imageMsg.width}x${imageMsg.height}`);
-    console.log(`File size: ${imageMsg.fileLength} bytes`);
+  // Type-safe event detection using EventType enum
+  const eventType = detectEventType(event);
 
-    // Full type safety and autocompletion
-    if (imageMsg.caption) {
-      console.log(`Caption: ${imageMsg.caption}`);
-    }
-  }
+  switch (eventType) {
+    case EventType.MESSAGE:
+      const messageEvent = event as MessageEvent;
+      const messageContent = getMessageContent(messageEvent.Message);
 
-  if (messageContent?.type === "buttons") {
-    // TypeScript knows this is a ButtonsMessage
-    const buttonsMsg: ButtonsMessage = messageContent.content;
-    console.log(`Button message: ${buttonsMsg.contentText}`);
+      if (messageContent?.type === "image") {
+        // TypeScript knows this is an ImageMessage
+        const imageMsg: ImageMessage = messageContent.content;
+        console.log(`Image dimensions: ${imageMsg.width}x${imageMsg.height}`);
 
-    buttonsMsg.buttons?.forEach((button, index) => {
-      console.log(`Button ${index + 1}: ${button.buttonText?.displayText}`);
-    });
+        // Handle S3 media if available
+        if (hasS3Media(webhookPayload)) {
+          console.log(`S3 URL: ${webhookPayload.s3.url}`);
+          // Download from S3 or process as needed
+        }
+
+        // Handle Base64 media if available
+        if (hasBase64Media(webhookPayload)) {
+          console.log("Processing base64 image data");
+          // Process base64 data: webhookPayload.base64
+        }
+      }
+      break;
+
+    case EventType.RECEIPT:
+      const receiptEvent = event as Receipt;
+      console.log(`Receipt type: ${receiptEvent.Type}`);
+      break;
+
+    case EventType.PRESENCE:
+      const presenceEvent = event as Presence;
+      console.log(`User ${presenceEvent.From.User} presence update`);
+      break;
+
+    default:
+      console.log(`Unhandled event: ${eventType}`);
   }
 }
+
+// Complete webhook server with S3 support
+app.post("/webhook", async (req, res) => {
+  try {
+    const payload: WebhookPayload = req.body;
+    await handleTypedWebhook(payload);
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Webhook error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Helper function to handle all message types generically
 function processMessageContent(content: MessageContent) {

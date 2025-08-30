@@ -1,7 +1,13 @@
 // Comprehensive webhook events handling example for WuzAPI
 // This example shows how to handle different types of WhatsApp events via webhooks
 
-import WuzapiClient, { getMessageContent } from "wuzapi";
+import WuzapiClient, {
+  getMessageContent,
+  EventType,
+  hasS3Media,
+  hasBase64Media,
+  hasBothMedia,
+} from "wuzapi";
 import express from "express";
 
 const app = express();
@@ -387,59 +393,108 @@ const eventHandlers = {
 // Main webhook endpoint
 app.post("/webhook", async (req, res) => {
   try {
-    const eventData = req.body;
+    const webhookPayload = req.body;
 
-    // Log the raw event for debugging
-    console.log("📨 Webhook received:", JSON.stringify(eventData, null, 2));
+    // Log the raw payload for debugging
+    console.log(
+      "📨 Webhook received:",
+      JSON.stringify(webhookPayload, null, 2)
+    );
 
-    // Determine event type and handle accordingly
-    // Note: The actual event structure depends on your WuzAPI webhook configuration
+    // Handle S3 media information if present
+    if (hasS3Media(webhookPayload)) {
+      console.log("☁️ S3 Media Information:");
+      console.log(`🔗 URL: ${webhookPayload.s3.url}`);
+      console.log(`🗂️ Bucket: ${webhookPayload.s3.bucket}`);
+      console.log(`🔑 Key: ${webhookPayload.s3.key}`);
+      console.log(`📊 Size: ${webhookPayload.s3.size} bytes`);
+      console.log(`📋 Type: ${webhookPayload.s3.mimeType}`);
+      console.log(`📄 File: ${webhookPayload.s3.fileName}`);
+    }
 
-    if (eventData.Message) {
-      await eventHandlers.handleMessage(eventData);
-    } else if (eventData.MessageIDs && eventData.Type) {
-      await eventHandlers.handleReceipt(eventData);
-    } else if (eventData.From && typeof eventData.Unavailable !== "undefined") {
-      await eventHandlers.handlePresence(eventData);
-    } else if (eventData.State && eventData.MessageSource) {
-      await eventHandlers.handleChatPresence(eventData);
-    } else if (eventData.GroupName && eventData.Participants) {
-      await eventHandlers.handleGroupInfo(eventData);
-    } else if (eventData.Reason && eventData.Type && eventData.Participants) {
-      await eventHandlers.handleJoinedGroup(eventData);
-    } else if (eventData.Codes) {
-      await eventHandlers.handleQR(eventData);
-    } else if (
-      eventData.JID &&
-      eventData.Author &&
-      typeof eventData.Remove !== "undefined"
-    ) {
-      await eventHandlers.handlePicture(eventData);
-    } else if (eventData.Found && eventData.FullName) {
-      await eventHandlers.handleContact(eventData);
-    } else if (eventData.OldPushName && eventData.NewPushName) {
-      await eventHandlers.handlePushName(eventData);
-    } else if (eventData.IsUnavailable !== undefined) {
-      await eventHandlers.handleUndecryptableMessage(eventData);
-    } else if (eventData.Code) {
-      await eventHandlers.handleStreamError(eventData);
-    } else if (eventData.event_type) {
-      // Handle events with explicit type field
-      switch (eventData.event_type) {
-        case "connected":
-          await eventHandlers.handleConnected(eventData);
-          break;
-        case "disconnected":
-          await eventHandlers.handleDisconnected(eventData);
-          break;
-        case "logged_out":
-          await eventHandlers.handleLoggedOut(eventData);
-          break;
-        default:
-          console.log(`🤷 Unknown event type: ${eventData.event_type}`);
-      }
-    } else {
-      console.log("🤷 Unknown event structure:", eventData);
+    if (hasBase64Media(webhookPayload)) {
+      console.log("📦 Base64 media included");
+      console.log(`📋 Type: ${webhookPayload.mimeType}`);
+      console.log(`📄 File: ${webhookPayload.fileName}`);
+      console.log(`📊 Size: ${webhookPayload.base64.length} chars`);
+    }
+
+    if (hasBothMedia(webhookPayload)) {
+      console.log("🔄 Both S3 and Base64 media provided");
+    }
+
+    // Extract the actual event data
+    const eventData = webhookPayload.event || webhookPayload;
+
+    // Determine event type using the EventType enum and handle accordingly
+    const eventType = detectEventType(eventData);
+
+    console.log(`🏷️ Event Type: ${eventType}`);
+
+    switch (eventType) {
+      case EventType.MESSAGE:
+        await eventHandlers.handleMessage(eventData);
+        break;
+
+      case EventType.RECEIPT:
+        await eventHandlers.handleReceipt(eventData);
+        break;
+
+      case EventType.PRESENCE:
+        await eventHandlers.handlePresence(eventData);
+        break;
+
+      case EventType.CHAT_PRESENCE:
+        await eventHandlers.handleChatPresence(eventData);
+        break;
+
+      case EventType.GROUP_INFO:
+        await eventHandlers.handleGroupInfo(eventData);
+        break;
+
+      case EventType.JOINED_GROUP:
+        await eventHandlers.handleJoinedGroup(eventData);
+        break;
+
+      case EventType.QR:
+        await eventHandlers.handleQR(eventData);
+        break;
+
+      case EventType.PICTURE:
+        await eventHandlers.handlePicture(eventData);
+        break;
+
+      case EventType.CONTACT:
+        await eventHandlers.handleContact(eventData);
+        break;
+
+      case EventType.PUSH_NAME:
+        await eventHandlers.handlePushName(eventData);
+        break;
+
+      case EventType.UNDECRYPTABLE_MESSAGE:
+        await eventHandlers.handleUndecryptableMessage(eventData);
+        break;
+
+      case EventType.STREAM_ERROR:
+        await eventHandlers.handleStreamError(eventData);
+        break;
+
+      case EventType.CONNECTED:
+        await eventHandlers.handleConnected(eventData);
+        break;
+
+      case EventType.DISCONNECTED:
+        await eventHandlers.handleDisconnected(eventData);
+        break;
+
+      case EventType.LOGGED_OUT:
+        await eventHandlers.handleLoggedOut(eventData);
+        break;
+
+      default:
+        console.log(`🤷 Unknown or unhandled event type: ${eventType}`);
+        console.log("📋 Event data:", eventData);
     }
 
     res.status(200).json({ success: true });
@@ -448,6 +503,70 @@ app.post("/webhook", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Helper function to detect event type from event data structure
+function detectEventType(eventData) {
+  // Check for specific event patterns to determine type
+  if (eventData.Message && eventData.Info) {
+    return EventType.MESSAGE;
+  }
+  if (eventData.MessageIDs && eventData.Type) {
+    return EventType.RECEIPT;
+  }
+  if (eventData.From && typeof eventData.Unavailable !== "undefined") {
+    return EventType.PRESENCE;
+  }
+  if (eventData.State && eventData.MessageSource) {
+    return EventType.CHAT_PRESENCE;
+  }
+  if (eventData.GroupName && eventData.Participants) {
+    return EventType.GROUP_INFO;
+  }
+  if (eventData.Reason && eventData.Type && eventData.Participants) {
+    return EventType.JOINED_GROUP;
+  }
+  if (eventData.Codes) {
+    return EventType.QR;
+  }
+  if (
+    eventData.JID &&
+    eventData.Author &&
+    typeof eventData.Remove !== "undefined"
+  ) {
+    return EventType.PICTURE;
+  }
+  if (eventData.Found !== undefined && eventData.FullName) {
+    return EventType.CONTACT;
+  }
+  if (eventData.OldPushName && eventData.NewPushName) {
+    return EventType.PUSH_NAME;
+  }
+  if (eventData.IsUnavailable !== undefined) {
+    return EventType.UNDECRYPTABLE_MESSAGE;
+  }
+  if (eventData.Code && !eventData.Expire) {
+    return EventType.STREAM_ERROR;
+  }
+
+  // Handle events with explicit type field
+  if (eventData.event_type) {
+    switch (eventData.event_type) {
+      case "connected":
+        return EventType.CONNECTED;
+      case "disconnected":
+        return EventType.DISCONNECTED;
+      case "logged_out":
+        return EventType.LOGGED_OUT;
+    }
+  }
+
+  // Try to detect by checking specific fields
+  if (eventData.Connected !== undefined) {
+    return EventType.CONNECTED;
+  }
+
+  return "Unknown";
+}
 
 // Health check endpoint
 app.get("/health", (req, res) => {
@@ -481,23 +600,23 @@ async function initializeWebhookServer() {
     }
     console.log("✅ Connected to WuzAPI");
 
-    // Connect to WhatsApp with full event subscription
+    // Connect to WhatsApp with full event subscription using EventType enum
     await client.session.connect({
       Subscribe: [
-        "Message",
-        "ReadReceipt",
-        "Presence",
-        "ChatPresence",
-        "GroupInfo",
-        "Contact",
-        "PushName",
-        "Picture",
-        "QR",
-        "Connected",
-        "Disconnected",
-        "LoggedOut",
-        "UndecryptableMessage",
-        "StreamError",
+        EventType.MESSAGE,
+        EventType.RECEIPT,
+        EventType.PRESENCE,
+        EventType.CHAT_PRESENCE,
+        EventType.GROUP_INFO,
+        EventType.CONTACT,
+        EventType.PUSH_NAME,
+        EventType.PICTURE,
+        EventType.QR,
+        EventType.CONNECTED,
+        EventType.DISCONNECTED,
+        EventType.LOGGED_OUT,
+        EventType.UNDECRYPTABLE_MESSAGE,
+        EventType.STREAM_ERROR,
       ],
       Immediate: false,
     });
