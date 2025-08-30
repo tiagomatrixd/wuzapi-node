@@ -2,7 +2,11 @@
 
 export interface WuzapiConfig {
   apiUrl: string;
-  token: string;
+  token?: string;
+}
+
+export interface RequestOptions {
+  token?: string;
 }
 
 export interface WuzapiResponse<T = unknown> {

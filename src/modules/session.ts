@@ -9,69 +9,79 @@ import {
   S3ConfigResponse,
   S3TestResponse,
 } from "../types/session.js";
-import { S3Config } from "../types/common.js";
+import { S3Config, RequestOptions } from "../types/common.js";
 
 export class SessionModule extends BaseClient {
   /**
    * Connect to WhatsApp servers
    */
-  async connect(options: ConnectRequest): Promise<ConnectResponse> {
-    return this.post<ConnectResponse>("/session/connect", options);
+  async connect(
+    request: ConnectRequest,
+    options?: RequestOptions
+  ): Promise<ConnectResponse> {
+    return this.post<ConnectResponse>("/session/connect", request, options);
   }
 
   /**
    * Disconnect from WhatsApp servers
    */
-  async disconnect(): Promise<DisconnectResponse> {
-    return this.post<DisconnectResponse>("/session/disconnect");
+  async disconnect(options?: RequestOptions): Promise<DisconnectResponse> {
+    return this.post<DisconnectResponse>(
+      "/session/disconnect",
+      undefined,
+      options
+    );
   }
 
   /**
    * Logout and finish the session
    */
-  async logout(): Promise<LogoutResponse> {
-    return this.post<LogoutResponse>("/session/logout");
+  async logout(options?: RequestOptions): Promise<LogoutResponse> {
+    return this.post<LogoutResponse>("/session/logout", undefined, options);
   }
 
   /**
    * Get session status
    */
-  async getStatus(): Promise<StatusResponse> {
-    return this.get<StatusResponse>("/session/status");
+  async getStatus(options?: RequestOptions): Promise<StatusResponse> {
+    return this.get<StatusResponse>("/session/status", options);
   }
 
   /**
    * Get QR code for scanning
    */
-  async getQRCode(): Promise<QRCodeResponse> {
-    return this.get<QRCodeResponse>("/session/qr");
+  async getQRCode(options?: RequestOptions): Promise<QRCodeResponse> {
+    return this.get<QRCodeResponse>("/session/qr", options);
   }
 
   /**
    * Configure S3 storage
    */
-  async configureS3(config: S3Config): Promise<S3ConfigResponse> {
-    return this.post<S3ConfigResponse>("/session/s3/config", config);
+  async configureS3(
+    config: S3Config,
+    options?: RequestOptions
+  ): Promise<S3ConfigResponse> {
+    return this.post<S3ConfigResponse>("/session/s3/config", config, options);
   }
 
   /**
    * Get S3 configuration
    */
-  async getS3Config(): Promise<S3ConfigResponse> {
-    return this.get<S3ConfigResponse>("/session/s3/config");
+  async getS3Config(options?: RequestOptions): Promise<S3ConfigResponse> {
+    return this.get<S3ConfigResponse>("/session/s3/config", options);
   }
 
   /**
    * Test S3 connection
    */
-  async testS3(): Promise<S3TestResponse> {
-    return this.post<S3TestResponse>("/session/s3/test");
+  async testS3(options?: RequestOptions): Promise<S3TestResponse> {
+    return this.post<S3TestResponse>("/session/s3/test", undefined, options);
   }
 
   /**
    * Delete S3 configuration
    */
-  async deleteS3Config(): Promise<{ Details: string }> {
-    return this.delete<{ Details: string }>("/session/s3/config");
+  async deleteS3Config(options?: RequestOptions): Promise<{ Details: string }> {
+    return this.delete<{ Details: string }>("/session/s3/config", options);
   }
 }

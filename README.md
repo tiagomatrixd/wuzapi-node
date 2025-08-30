@@ -26,6 +26,8 @@ yarn add wuzapi
 
 ## Quick Start
 
+### Traditional Usage (Global Token)
+
 ```typescript
 import WuzapiClient from "wuzapi";
 
@@ -52,6 +54,48 @@ console.log("Connected:", status.Connected);
 console.log("Logged In:", status.LoggedIn);
 ```
 
+### Flexible Token Usage
+
+```typescript
+import WuzapiClient from "wuzapi";
+
+// Create client without token (or with admin token)
+const client = new WuzapiClient({
+  apiUrl: "http://localhost:8080",
+  token: "admin-token", // Optional: admin token as default
+});
+
+// Use specific user token for operations
+const userToken = "user-specific-token";
+
+// Connect with user token
+await client.session.connect(
+  {
+    Subscribe: ["Message", "ReadReceipt"],
+    Immediate: false,
+  },
+  { token: userToken }
+);
+
+// Send message with user token
+await client.chat.sendText(
+  {
+    Phone: "5491155554444",
+    Body: "Hello from user-specific token!",
+  },
+  { token: userToken }
+);
+
+// Admin operations with admin token (uses default)
+const users = await client.admin.listUsers();
+
+// Or explicitly use admin token
+const newUser = await client.admin.addUser(
+  { name: "John", token: "new-user-token" },
+  { token: "admin-token" }
+);
+```
+
 ## Configuration
 
 The client requires a configuration object with the following properties:
@@ -59,8 +103,45 @@ The client requires a configuration object with the following properties:
 ```typescript
 interface WuzapiConfig {
   apiUrl: string; // The WuzAPI server URL
-  token: string; // Your user authentication token
+  token?: string; // Your user authentication token (optional)
 }
+
+interface RequestOptions {
+  token?: string; // Token override for specific requests
+}
+```
+
+### Authentication Options
+
+You have two ways to handle authentication:
+
+1. **Global Token**: Set a default token in the client configuration
+2. **Per-Request Token**: Override the token for specific API calls
+
+```typescript
+// Option 1: Global token (traditional usage)
+const client = new WuzapiClient({
+  apiUrl: "http://localhost:8080",
+  token: "your-default-token",
+});
+
+// Option 2: No global token, specify per request
+const client = new WuzapiClient({
+  apiUrl: "http://localhost:8080",
+  // token is optional
+});
+
+// Option 3: Global token with per-request overrides
+const client = new WuzapiClient({
+  apiUrl: "http://localhost:8080",
+  token: "admin-token", // Default admin token
+});
+
+// Use different token for specific operations
+await client.chat.sendText(
+  { Phone: "5491155554444", Body: "Hello!" },
+  { token: "user-specific-token" }
+);
 ```
 
 ## API Modules
@@ -109,12 +190,21 @@ await client.session.configureS3({
 Send messages and manage chat interactions.
 
 ```typescript
-// Send text message
+// Send text message (using global token)
 await client.chat.sendText({
   Phone: "5491155554444",
   Body: "Hello World!",
   Id: "optional-message-id",
 });
+
+// Send with specific token override
+await client.chat.sendText(
+  {
+    Phone: "5491155554444",
+    Body: "Hello with custom token!",
+  },
+  { token: "user-specific-token" }
+);
 
 // Reply to a message
 await client.chat.sendText({
@@ -247,7 +337,7 @@ await client.group.removePhoto("120362023605733675@g.us");
 Manage users (requires admin token).
 
 ```typescript
-// Create admin client
+// Option 1: Create dedicated admin client
 const adminClient = new WuzapiClient({
   apiUrl: "http://localhost:8080",
   token: "your-admin-token",
@@ -256,31 +346,43 @@ const adminClient = new WuzapiClient({
 // List all users
 const users = await adminClient.admin.listUsers();
 
-// Add new user
-const newUser = await adminClient.admin.addUser({
-  name: "John Doe",
-  token: "user-token-123",
-  webhook: "https://example.com/webhook",
-  events: "Message,ReadReceipt",
-  proxyConfig: {
-    enabled: true,
-    proxyURL: "socks5://user:pass@proxy:port",
-  },
-  s3Config: {
-    enabled: true,
-    endpoint: "https://s3.amazonaws.com",
-    region: "us-east-1",
-    bucket: "user-media-bucket",
-    accessKey: "AKIA...",
-    secretKey: "secret...",
-    pathStyle: false,
-    mediaDelivery: "both",
-    retentionDays: 30,
-  },
+// Option 2: Use shared client with token override
+const client = new WuzapiClient({
+  apiUrl: "http://localhost:8080",
+  // No default token or user token as default
 });
 
+// Admin operations with explicit admin token
+const users = await client.admin.listUsers({ token: "admin-token" });
+
+// Add new user
+const newUser = await client.admin.addUser(
+  {
+    name: "John Doe",
+    token: "user-token-123",
+    webhook: "https://example.com/webhook",
+    events: "Message,ReadReceipt",
+    proxyConfig: {
+      enabled: true,
+      proxyURL: "socks5://user:pass@proxy:port",
+    },
+    s3Config: {
+      enabled: true,
+      endpoint: "https://s3.amazonaws.com",
+      region: "us-east-1",
+      bucket: "user-media-bucket",
+      accessKey: "AKIA...",
+      secretKey: "secret...",
+      pathStyle: false,
+      mediaDelivery: "both",
+      retentionDays: 30,
+    },
+  },
+  { token: "admin-token" }
+);
+
 // Delete user
-await adminClient.admin.deleteUser(2);
+await client.admin.deleteUser(2, { token: "admin-token" });
 ```
 
 ### Webhook Module
@@ -1233,6 +1335,42 @@ try {
     console.error("Unexpected error:", error);
   }
 }
+```
+
+### Token Authentication Errors
+
+When no token is provided (either globally or per-request), the library will throw a specific error:
+
+```typescript
+import { WuzapiError } from "wuzapi";
+
+// Client without global token
+const client = new WuzapiClient({
+  apiUrl: "http://localhost:8080",
+  // No token provided
+});
+
+try {
+  // This will fail - no token provided
+  await client.chat.sendText({
+    Phone: "5491155554444",
+    Body: "This will fail",
+  });
+} catch (error) {
+  if (error instanceof WuzapiError && error.code === 401) {
+    console.error("Authentication required:", error.message);
+    // "No authentication token provided. Either set a token in the client config or provide one in the request options."
+  }
+}
+
+// Fix by providing token
+await client.chat.sendText(
+  {
+    Phone: "5491155554444",
+    Body: "Now it works!",
+  },
+  { token: "your-token" }
+);
 ```
 
 ### Error Types

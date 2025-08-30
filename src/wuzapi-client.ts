@@ -1,4 +1,4 @@
-import { WuzapiConfig } from "./types/common.js";
+import { WuzapiConfig, RequestOptions } from "./types/common.js";
 import { AdminModule } from "./modules/admin.js";
 import { SessionModule } from "./modules/session.js";
 import { UserModule } from "./modules/user.js";
@@ -35,9 +35,9 @@ export class WuzapiClient {
   /**
    * Test connection to the API
    */
-  async ping(): Promise<boolean> {
+  async ping(options?: RequestOptions): Promise<boolean> {
     try {
-      await this.session.getStatus();
+      await this.session.getStatus(options);
       return true;
     } catch {
       return false;

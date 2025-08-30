@@ -1,5 +1,9 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
-import { WuzapiConfig, WuzapiResponse } from "./types/common.js";
+import {
+  WuzapiConfig,
+  WuzapiResponse,
+  RequestOptions,
+} from "./types/common.js";
 
 export class WuzapiError extends Error {
   public code: number;
@@ -23,7 +27,6 @@ export class BaseClient {
       baseURL: config.apiUrl,
       headers: {
         "Content-Type": "application/json",
-        Authorization: config.token,
       },
     });
 
@@ -50,15 +53,36 @@ export class BaseClient {
     );
   }
 
+  /**
+   * Resolve the token from request options or instance config
+   * Throws an error if no token is available
+   */
+  private resolveToken(options?: RequestOptions): string {
+    const token = options?.token || this.config.token;
+    if (!token) {
+      throw new WuzapiError(
+        401,
+        "No authentication token provided. Either set a token in the client config or provide one in the request options."
+      );
+    }
+    return token;
+  }
+
   protected async request<T>(
     method: "GET" | "POST" | "DELETE",
     endpoint: string,
-    data?: unknown
+    data?: unknown,
+    options?: RequestOptions
   ): Promise<T> {
+    const token = this.resolveToken(options);
+
     const response = await this.axios.request<WuzapiResponse<T>>({
       method,
       url: endpoint,
       data,
+      headers: {
+        Authorization: token,
+      },
     });
 
     if (!response.data.success) {
@@ -72,15 +96,25 @@ export class BaseClient {
     return response.data.data;
   }
 
-  protected async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>("GET", endpoint);
+  protected async get<T>(
+    endpoint: string,
+    options?: RequestOptions
+  ): Promise<T> {
+    return this.request<T>("GET", endpoint, undefined, options);
   }
 
-  protected async post<T>(endpoint: string, data?: unknown): Promise<T> {
-    return this.request<T>("POST", endpoint, data);
+  protected async post<T>(
+    endpoint: string,
+    data?: unknown,
+    options?: RequestOptions
+  ): Promise<T> {
+    return this.request<T>("POST", endpoint, data, options);
   }
 
-  protected async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>("DELETE", endpoint);
+  protected async delete<T>(
+    endpoint: string,
+    options?: RequestOptions
+  ): Promise<T> {
+    return this.request<T>("DELETE", endpoint, undefined, options);
   }
 }

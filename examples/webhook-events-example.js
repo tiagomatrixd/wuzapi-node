@@ -1,5 +1,25 @@
 // Comprehensive webhook events handling example for WuzAPI
 // This example shows how to handle different types of WhatsApp events via webhooks
+//
+// TOKEN USAGE OPTIONS:
+//
+// Option 1: Traditional global token (used in this example)
+// const client = new WuzapiClient({
+//   apiUrl: "http://localhost:8080",
+//   token: "your-user-token-here",
+// });
+//
+// Option 2: Flexible per-request tokens
+// const client = new WuzapiClient({
+//   apiUrl: "http://localhost:8080",
+//   // No global token
+// });
+//
+// Then for each API call, add the second parameter:
+// await client.chat.sendText(messageData, { token: "user-specific-token" });
+// await client.session.getStatus({ token: "user-specific-token" });
+//
+// This allows using different tokens for different operations in the same client instance.
 
 import WuzapiClient, {
   getMessageContent,
@@ -13,7 +33,7 @@ import express from "express";
 const app = express();
 app.use(express.json());
 
-// Initialize the client
+// Initialize the client (using traditional global token approach)
 const client = new WuzapiClient({
   apiUrl: "http://localhost:8080",
   token: "your-user-token-here",
@@ -51,6 +71,7 @@ const eventHandlers = {
             Phone: from,
             Body: "👋 Hello! Thanks for your message.",
           });
+          // With flexible tokens, you would add: , { token: "user-specific-token" }
         }
         break;
 
@@ -595,6 +616,7 @@ async function initializeWebhookServer() {
 
     // Test WuzAPI connection
     const isConnected = await client.ping();
+    // With flexible tokens: await client.ping({ token: "user-specific-token" });
     if (!isConnected) {
       throw new Error("Cannot connect to WuzAPI server");
     }
@@ -620,14 +642,17 @@ async function initializeWebhookServer() {
       ],
       Immediate: false,
     });
+    // With flexible tokens: add second parameter { token: "user-specific-token" }
 
     console.log("📱 Connected to WhatsApp");
 
     // Check login status
     const status = await client.session.getStatus();
+    // With flexible tokens: await client.session.getStatus({ token: "user-specific-token" });
     if (!status.LoggedIn) {
       console.log("📱 Not logged in. Please scan QR code...");
       const qr = await client.session.getQRCode();
+      // With flexible tokens: await client.session.getQRCode({ token: "user-specific-token" });
       console.log("📷 QR Code:", qr.QRCode);
     } else {
       console.log("✅ Already logged in to WhatsApp");
@@ -637,6 +662,7 @@ async function initializeWebhookServer() {
     const webhookUrl =
       process.env.WEBHOOK_URL || "http://localhost:3000/webhook";
     await client.webhook.setWebhook(webhookUrl);
+    // With flexible tokens: await client.webhook.setWebhook(webhookUrl, { token: "user-specific-token" });
     console.log(`🔗 Webhook configured: ${webhookUrl}`);
 
     // Start the server
@@ -658,6 +684,7 @@ process.on("SIGINT", async () => {
   console.log("\n🛑 Shutting down webhook server...");
   try {
     await client.session.disconnect();
+    // With flexible tokens: await client.session.disconnect({ token: "user-specific-token" });
     console.log("✅ Disconnected from WhatsApp");
   } catch (error) {
     console.error("❌ Error during shutdown:", error);

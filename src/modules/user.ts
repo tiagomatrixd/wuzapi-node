@@ -1,4 +1,5 @@
 import { BaseClient } from "../client.js";
+import { RequestOptions } from "../types/common.js";
 import {
   UserInfoRequest,
   UserInfoResponse,
@@ -13,17 +14,23 @@ export class UserModule extends BaseClient {
   /**
    * Get user details for specified phone numbers
    */
-  async getInfo(phones: string[]): Promise<UserInfoResponse> {
+  async getInfo(
+    phones: string[],
+    options?: RequestOptions
+  ): Promise<UserInfoResponse> {
     const request: UserInfoRequest = { Phone: phones };
-    return this.post<UserInfoResponse>("/user/info", request);
+    return this.post<UserInfoResponse>("/user/info", request, options);
   }
 
   /**
    * Check if phone numbers are registered WhatsApp users
    */
-  async check(phones: string[]): Promise<UserCheckResponse> {
+  async check(
+    phones: string[],
+    options?: RequestOptions
+  ): Promise<UserCheckResponse> {
     const request: UserCheckRequest = { Phone: phones };
-    return this.post<UserCheckResponse>("/user/check", request);
+    return this.post<UserCheckResponse>("/user/check", request, options);
   }
 
   /**
@@ -31,16 +38,17 @@ export class UserModule extends BaseClient {
    */
   async getAvatar(
     phone: string,
-    preview: boolean = true
+    preview: boolean = true,
+    options?: RequestOptions
   ): Promise<UserAvatarResponse> {
     const request: UserAvatarRequest = { Phone: phone, Preview: preview };
-    return this.post<UserAvatarResponse>("/user/avatar", request);
+    return this.post<UserAvatarResponse>("/user/avatar", request, options);
   }
 
   /**
    * Get all contacts
    */
-  async getContacts(): Promise<ContactsResponse> {
-    return this.get<ContactsResponse>("/user/contacts");
+  async getContacts(options?: RequestOptions): Promise<ContactsResponse> {
+    return this.get<ContactsResponse>("/user/contacts", options);
   }
 }

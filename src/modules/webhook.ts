@@ -1,4 +1,5 @@
 import { BaseClient } from "../client.js";
+import { RequestOptions } from "../types/common.js";
 import {
   SetWebhookRequest,
   SetWebhookResponse,
@@ -9,15 +10,18 @@ export class WebhookModule extends BaseClient {
   /**
    * Set webhook URL and events to subscribe to
    */
-  async setWebhook(webhookURL: string): Promise<SetWebhookResponse> {
+  async setWebhook(
+    webhookURL: string,
+    options?: RequestOptions
+  ): Promise<SetWebhookResponse> {
     const request: SetWebhookRequest = { webhookURL };
-    return this.post<SetWebhookResponse>("/webhook", request);
+    return this.post<SetWebhookResponse>("/webhook", request, options);
   }
 
   /**
    * Get current webhook configuration
    */
-  async getWebhook(): Promise<GetWebhookResponse> {
-    return this.get<GetWebhookResponse>("/webhook");
+  async getWebhook(options?: RequestOptions): Promise<GetWebhookResponse> {
+    return this.get<GetWebhookResponse>("/webhook", options);
   }
 }
