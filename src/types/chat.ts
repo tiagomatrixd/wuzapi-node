@@ -1,4 +1,4 @@
-import { ContextInfo } from "./common.js";
+import { SimpleContextInfo } from "./common.js";
 
 // Chat endpoints types
 
@@ -12,7 +12,7 @@ export interface SendTextRequest {
   Phone: string;
   Body: string;
   Id?: string;
-  ContextInfo?: ContextInfo;
+  ContextInfo?: SimpleContextInfo;
 }
 
 export interface TemplateButton {
@@ -27,27 +27,27 @@ export interface SendTemplateRequest {
   Content: string;
   Footer?: string;
   Buttons: TemplateButton[];
-  ContextInfo?: ContextInfo;
+  ContextInfo?: SimpleContextInfo;
 }
 
 export interface SendAudioRequest {
   Phone: string;
   Audio: string; // base64 encoded
-  ContextInfo?: ContextInfo;
+  ContextInfo?: SimpleContextInfo;
 }
 
 export interface SendImageRequest {
   Phone: string;
   Image: string; // base64 encoded
   Caption?: string;
-  ContextInfo?: ContextInfo;
+  ContextInfo?: SimpleContextInfo;
 }
 
 export interface SendDocumentRequest {
   Phone: string;
   Document: string; // base64 encoded
   FileName: string;
-  ContextInfo?: ContextInfo;
+  ContextInfo?: SimpleContextInfo;
 }
 
 export interface SendVideoRequest {
@@ -55,14 +55,14 @@ export interface SendVideoRequest {
   Video: string; // base64 encoded
   Caption?: string;
   JpegThumbnail?: string;
-  ContextInfo?: ContextInfo;
+  ContextInfo?: SimpleContextInfo;
 }
 
 export interface SendStickerRequest {
   Phone: string;
   Sticker: string; // base64 encoded
   PngThumbnail?: string;
-  ContextInfo?: ContextInfo;
+  ContextInfo?: SimpleContextInfo;
 }
 
 export interface SendLocationRequest {
@@ -70,14 +70,14 @@ export interface SendLocationRequest {
   Latitude: number;
   Longitude: number;
   Name?: string;
-  ContextInfo?: ContextInfo;
+  ContextInfo?: SimpleContextInfo;
 }
 
 export interface SendContactRequest {
   Phone: string;
   Name: string;
   Vcard: string;
-  ContextInfo?: ContextInfo;
+  ContextInfo?: SimpleContextInfo;
 }
 
 export interface ChatPresenceRequest {

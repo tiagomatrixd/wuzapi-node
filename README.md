@@ -285,7 +285,7 @@ await adminClient.admin.deleteUser(2);
 
 ### Webhook Module
 
-Configure webhook settings.
+Configure webhook settings and handle incoming WhatsApp events.
 
 ```typescript
 // Set webhook URL
@@ -295,6 +295,721 @@ await client.webhook.setWebhook("https://my-server.com/webhook");
 const webhookConfig = await client.webhook.getWebhook();
 console.log("Webhook URL:", webhookConfig.webhook);
 console.log("Subscribed events:", webhookConfig.subscribe);
+```
+
+## Webhook Event Handling
+
+WuzAPI sends real-time events to your webhook endpoint. Here's how to handle different types of events:
+
+### Basic Webhook Setup
+
+```typescript
+import express from "express";
+import WuzapiClient from "wuzapi";
+
+const app = express();
+app.use(express.json());
+
+const client = new WuzapiClient({
+  apiUrl: "http://localhost:8080",
+  token: "your-token",
+});
+
+// Webhook endpoint
+app.post("/webhook", async (req, res) => {
+  try {
+    const event = req.body;
+
+    // Handle different event types
+    if (event.Message) {
+      await handleMessage(event);
+    } else if (event.MessageIDs && event.Type) {
+      await handleReceipt(event);
+    } else if (event.From && typeof event.Unavailable !== "undefined") {
+      await handlePresence(event);
+    }
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Webhook error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.listen(3000, () => {
+  console.log("Webhook server running on port 3000");
+});
+```
+
+### Message Events
+
+Handle incoming messages of all types using the comprehensive Message types:
+
+```typescript
+import { getMessageContent } from "wuzapi";
+
+async function handleMessage(event) {
+  const { Info, Message, IsEphemeral, IsViewOnce } = event;
+  const from = Info.RemoteJid.replace("@s.whatsapp.net", "");
+  const isGroup = Info.RemoteJid.includes("@g.us");
+
+  console.log(`New message from ${from}${isGroup ? " (group)" : ""}`);
+
+  if (IsEphemeral) console.log("⏱️ Ephemeral message");
+  if (IsViewOnce) console.log("👁️ View once message");
+
+  // Use the utility function to get structured message content
+  const messageContent = getMessageContent(Message);
+
+  if (!messageContent) {
+    console.log("❓ Unknown message type");
+    return;
+  }
+
+  // Handle different message types with full type safety
+  switch (messageContent.type) {
+    case "text":
+      console.log(`💬 Text: ${messageContent.content}`);
+
+      // Auto-reply to specific messages
+      if (messageContent.content.toLowerCase().includes("hello")) {
+        await client.chat.sendText({
+          Phone: from,
+          Body: "👋 Hello! Thanks for your message.",
+        });
+      }
+      break;
+
+    case "extendedText":
+      console.log(`📝 Extended text: ${messageContent.content.text}`);
+      if (messageContent.content.canonicalUrl) {
+        console.log(`🔗 Link preview: ${messageContent.content.canonicalUrl}`);
+        console.log(`📰 Title: ${messageContent.content.title}`);
+      }
+      break;
+
+    case "image":
+      const imageMsg = messageContent.content;
+      console.log(`🖼️ Image: ${imageMsg.caption || "No caption"}`);
+      console.log(`📏 Dimensions: ${imageMsg.width}x${imageMsg.height}`);
+
+      // Download the image with proper types
+      if (imageMsg.url && imageMsg.mediaKey) {
+        try {
+          const media = await client.chat.downloadImage({
+            Url: imageMsg.url,
+            MediaKey: Array.from(imageMsg.mediaKey),
+            Mimetype: imageMsg.mimetype,
+            FileSHA256: Array.from(imageMsg.fileSha256),
+            FileLength: imageMsg.fileLength,
+          });
+          console.log("✅ Image downloaded successfully");
+        } catch (error) {
+          console.log("❌ Failed to download image:", error.message);
+        }
+      }
+      break;
+
+    case "video":
+      const videoMsg = messageContent.content;
+      console.log(`🎥 Video: ${videoMsg.caption || "No caption"}`);
+      console.log(`⏱️ Duration: ${videoMsg.seconds}s`);
+      if (videoMsg.gifPlayback) {
+        console.log("🎬 GIF playback enabled");
+      }
+      break;
+
+    case "audio":
+      const audioMsg = messageContent.content;
+      console.log(`🎵 Audio: ${audioMsg.seconds}s`);
+      if (audioMsg.ptt) {
+        console.log("🎤 Voice note (Push-to-talk)");
+      }
+      break;
+
+    case "document":
+      const docMsg = messageContent.content;
+      console.log(`📄 Document: ${docMsg.fileName || docMsg.title}`);
+      console.log(`📊 Size: ${docMsg.fileLength} bytes`);
+      console.log(`📋 Type: ${docMsg.mimetype}`);
+      break;
+
+    case "location":
+      const locMsg = messageContent.content;
+      console.log(
+        `📍 Location: ${locMsg.degreesLatitude}, ${locMsg.degreesLongitude}`
+      );
+      if (locMsg.name) console.log(`🏷️ Name: ${locMsg.name}`);
+      if (locMsg.isLiveLocation) console.log("📡 Live location sharing");
+      break;
+
+    case "contact":
+      console.log(`👤 Contact: ${messageContent.content.displayName}`);
+      break;
+
+    case "sticker":
+      const stickerMsg = messageContent.content;
+      console.log(`😀 Sticker`);
+      if (stickerMsg.isAnimated) console.log("🎬 Animated");
+      if (stickerMsg.isLottie) console.log("🎨 Lottie");
+      break;
+
+    case "buttons":
+      const btnMsg = messageContent.content;
+      console.log(`🔘 Interactive buttons: ${btnMsg.contentText}`);
+      console.log(`🔢 ${btnMsg.buttons?.length || 0} buttons`);
+      break;
+
+    case "list":
+      const listMsg = messageContent.content;
+      console.log(`📋 List: ${listMsg.title}`);
+      console.log(`📝 ${listMsg.sections?.length || 0} sections`);
+      break;
+
+    case "buttonsResponse":
+      const btnResponse = messageContent.content;
+      console.log(`✅ Button clicked: ${btnResponse.selectedDisplayText}`);
+      console.log(`🆔 Button ID: ${btnResponse.selectedButtonId}`);
+
+      // Handle button responses
+      switch (btnResponse.selectedButtonId) {
+        case "help":
+          await client.chat.sendText({
+            Phone: from,
+            Body: "🆘 How can I help you?",
+          });
+          break;
+        case "info":
+          await client.chat.sendText({
+            Phone: from,
+            Body: "ℹ️ Here's some information...",
+          });
+          break;
+      }
+      break;
+
+    case "listResponse":
+      const listResponse = messageContent.content;
+      console.log(`✅ List selection: ${listResponse.title}`);
+      if (listResponse.singleSelectReply) {
+        console.log(
+          `🆔 Selected: ${listResponse.singleSelectReply.selectedRowId}`
+        );
+      }
+      break;
+
+    case "poll":
+      const pollMsg = messageContent.content;
+      console.log(`📊 Poll: ${pollMsg.name}`);
+      console.log(`🔢 Options: ${pollMsg.options?.length || 0}`);
+      break;
+
+    case "reaction":
+      const reactionMsg = messageContent.content;
+      console.log(`😊 Reaction: ${reactionMsg.text}`);
+      console.log(`📝 To message: ${reactionMsg.key?.id}`);
+      break;
+
+    case "groupInvite":
+      const inviteMsg = messageContent.content;
+      console.log(`👥 Group invite: ${inviteMsg.groupName}`);
+      console.log(`🔗 Code: ${inviteMsg.inviteCode}`);
+      break;
+
+    default:
+      console.log(`❓ Unhandled message type: ${messageContent.type}`);
+  }
+}
+```
+
+### Read Receipts and Delivery Confirmations
+
+Handle message delivery and read confirmations:
+
+```typescript
+async function handleReceipt(event) {
+  const { MessageSource, MessageIDs, Type, Timestamp } = event;
+  const from = MessageSource.Chat.User;
+
+  console.log(
+    `Receipt from ${from}: ${Type} for ${MessageIDs.length} message(s)`
+  );
+
+  switch (Type) {
+    case "delivery":
+      console.log(`✅ Messages delivered to ${from}`);
+      // Update your database to mark messages as delivered
+      break;
+
+    case "read":
+      console.log(`👀 Messages read by ${from}`);
+      // Update your database to mark messages as read
+      break;
+
+    case "played":
+      console.log(`▶️ Voice/video messages played by ${from}`);
+      // Update your database to mark media as played
+      break;
+  }
+}
+```
+
+### Presence and Typing Indicators
+
+Handle user online/offline status and typing indicators:
+
+```typescript
+// User online/offline status
+async function handlePresence(event) {
+  const { From, Unavailable, LastSeen } = event;
+  const user = From.User;
+
+  if (Unavailable) {
+    console.log(`🔴 ${user} went offline (last seen: ${LastSeen})`);
+  } else {
+    console.log(`🟢 ${user} is online`);
+  }
+}
+
+// Typing indicators
+async function handleChatPresence(event) {
+  const { MessageSource, State, Media } = event;
+  const from = MessageSource.Sender.User;
+  const isGroup = MessageSource.IsGroup;
+
+  if (State === "composing") {
+    if (Media === "text") {
+      console.log(`⌨️ ${from} is typing${isGroup ? " in group" : ""}...`);
+    } else {
+      console.log(
+        `📎 ${from} is sending ${Media}${isGroup ? " in group" : ""}...`
+      );
+    }
+  } else if (State === "paused") {
+    console.log(`⏸️ ${from} stopped typing`);
+  }
+}
+```
+
+### Group Events
+
+Handle group-related events:
+
+```typescript
+// Group info updates
+async function handleGroupInfo(event) {
+  const { JID, GroupName, Participants, Sender } = event;
+  console.log(`👥 Group info updated for ${GroupName} (${JID.User})`);
+  console.log(`👤 Updated by: ${Sender.User}`);
+  console.log(`👥 Participants: ${Participants.length}`);
+}
+
+// When you're added to a group
+async function handleJoinedGroup(event) {
+  const { Reason, Type, Participants } = event;
+  console.log(`🎉 Joined group! Reason: ${Reason}, Type: ${Type}`);
+  console.log(`👥 Group has ${Participants.length} participants`);
+
+  // Send welcome message
+  // Note: You'll need the group JID from the event context
+}
+```
+
+### Connection Events
+
+Handle connection status changes:
+
+```typescript
+async function handleConnected(event) {
+  console.log("🟢 Connected to WhatsApp!");
+  // Your bot is now ready to send messages
+}
+
+async function handleDisconnected(event) {
+  console.log("🔴 Disconnected from WhatsApp");
+  // Attempt to reconnect or notify administrators
+}
+
+async function handleLoggedOut(event) {
+  const { Reason, OnConnect } = event;
+  console.log(`🚪 Logged out from WhatsApp. Reason: ${Reason}`);
+
+  if (OnConnect) {
+    console.log("⚠️ Logout occurred during connection");
+  }
+
+  // You may need to scan QR code again
+}
+```
+
+### QR Code Events
+
+Handle QR code generation for initial setup:
+
+```typescript
+async function handleQR(event) {
+  const { Codes } = event;
+  console.log("📱 New QR codes received:");
+
+  Codes.forEach((code, index) => {
+    console.log(`📷 QR Code ${index + 1}: ${code}`);
+    // Display QR code to user or save to file
+  });
+}
+```
+
+### Profile and Contact Updates
+
+Handle profile picture and contact information changes:
+
+```typescript
+// Profile picture changes
+async function handlePicture(event) {
+  const { JID, Author, Remove, Timestamp } = event;
+  const target = JID.User;
+  const changer = Author.User;
+
+  if (Remove) {
+    console.log(`🗑️ ${changer} removed profile picture for ${target}`);
+  } else {
+    console.log(`🖼️ ${changer} updated profile picture for ${target}`);
+  }
+}
+
+// Contact info updates
+async function handleContact(event) {
+  const { JID, Found, FullName, PushName, BusinessName } = event;
+  console.log(`👤 Contact info: ${FullName || PushName} (${JID.User})`);
+
+  if (BusinessName) {
+    console.log(`🏢 Business: ${BusinessName}`);
+  }
+
+  console.log(`✅ Found in WhatsApp: ${Found}`);
+}
+
+// Name changes
+async function handlePushName(event) {
+  const { JID, OldPushName, NewPushName } = event;
+  console.log(
+    `📝 ${JID.User} changed name from "${OldPushName}" to "${NewPushName}"`
+  );
+}
+```
+
+### Error Handling
+
+Handle various error events:
+
+```typescript
+// Undecryptable messages
+async function handleUndecryptableMessage(event) {
+  const { Info, IsUnavailable, UnavailableType, DecryptFailMode } = event;
+  console.log(`❌ Failed to decrypt message from ${Info.Source.Sender.User}`);
+  console.log(
+    `📊 Unavailable: ${IsUnavailable}, Type: ${UnavailableType}, Mode: ${DecryptFailMode}`
+  );
+
+  // Log for debugging or request message retry
+}
+
+// Stream errors
+async function handleStreamError(event) {
+  const { Code } = event;
+  console.log(`🚨 Stream error: ${Code}`);
+
+  // Handle specific error codes
+  switch (Code) {
+    case "conflict":
+      console.log("Another client connected with same credentials");
+      break;
+    case "stream:error":
+      console.log("General stream error occurred");
+      break;
+    default:
+      console.log("Unknown stream error");
+  }
+}
+```
+
+### Complete Webhook Server Example
+
+Here's a complete webhook server that handles all event types:
+
+```typescript
+import express from "express";
+import WuzapiClient, {
+  Message,
+  Receipt,
+  Presence,
+  EventGroupInfo,
+} from "wuzapi";
+
+const app = express();
+app.use(express.json());
+
+const client = new WuzapiClient({
+  apiUrl: process.env.WUZAPI_URL || "http://localhost:8080",
+  token: process.env.WUZAPI_TOKEN || "your-token",
+});
+
+// Event router
+const eventHandlers = {
+  Message: handleMessage,
+  Receipt: handleReceipt,
+  Presence: handlePresence,
+  ChatPresence: handleChatPresence,
+  GroupInfo: handleGroupInfo,
+  JoinedGroup: handleJoinedGroup,
+  Connected: handleConnected,
+  Disconnected: handleDisconnected,
+  LoggedOut: handleLoggedOut,
+  QR: handleQR,
+  Picture: handlePicture,
+  Contact: handleContact,
+  PushName: handlePushName,
+  UndecryptableMessage: handleUndecryptableMessage,
+  StreamError: handleStreamError,
+};
+
+app.post("/webhook", async (req, res) => {
+  try {
+    const eventData = req.body;
+
+    // Log all events for debugging
+    console.log("📨 Webhook received:", JSON.stringify(eventData, null, 2));
+
+    // Route to appropriate handler based on event structure
+    for (const [eventType, handler] of Object.entries(eventHandlers)) {
+      if (isEventType(eventData, eventType)) {
+        await handler(eventData);
+        break;
+      }
+    }
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("❌ Webhook processing error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Helper function to identify event types
+function isEventType(event, type) {
+  switch (type) {
+    case "Message":
+      return event.Message && event.Info;
+    case "Receipt":
+      return event.MessageIDs && event.Type;
+    case "Presence":
+      return event.From && typeof event.Unavailable !== "undefined";
+    case "ChatPresence":
+      return event.State && event.MessageSource;
+    case "GroupInfo":
+      return event.GroupName && event.Participants;
+    case "QR":
+      return event.Codes;
+    // Add more type checks as needed
+    default:
+      return false;
+  }
+}
+
+// Health check
+app.get("/health", (req, res) => {
+  res.json({ status: "healthy", timestamp: new Date().toISOString() });
+});
+
+// Initialize
+async function initialize() {
+  try {
+    // Connect to WhatsApp with all events
+    await client.session.connect({
+      Subscribe: [
+        "Message",
+        "ReadReceipt",
+        "Presence",
+        "ChatPresence",
+        "GroupInfo",
+        "Contact",
+        "PushName",
+        "Picture",
+        "QR",
+        "Connected",
+        "Disconnected",
+        "LoggedOut",
+        "UndecryptableMessage",
+        "StreamError",
+      ],
+      Immediate: false,
+    });
+
+    // Set webhook
+    const webhookUrl =
+      process.env.WEBHOOK_URL || "http://localhost:3000/webhook";
+    await client.webhook.setWebhook(webhookUrl);
+
+    app.listen(3000, () => {
+      console.log("🚀 Webhook server running on port 3000");
+      console.log("🎉 Ready to receive WhatsApp events!");
+    });
+  } catch (error) {
+    console.error("❌ Initialization failed:", error);
+    process.exit(1);
+  }
+}
+
+initialize();
+```
+
+### Event Types Reference
+
+All webhook events are fully typed. Import the specific event types you need:
+
+```typescript
+import {
+  // Core message types
+  Message,
+  MessageEvent,
+  MessageContent,
+  getMessageContent,
+
+  // Specific message types
+  ImageMessage,
+  VideoMessage,
+  AudioMessage,
+  DocumentMessage,
+  LocationMessage,
+  ContactMessage,
+  StickerMessage,
+  ButtonsMessage,
+  ListMessage,
+  PollCreationMessage,
+  ReactionMessage,
+
+  // Event types
+  Receipt,
+  Presence,
+  ChatPresence,
+  EventGroupInfo,
+  EventContact,
+  QR,
+  Picture,
+  PushName,
+  Connected,
+  Disconnected,
+  LoggedOut,
+  UndecryptableMessage,
+  StreamError,
+  WhatsAppEvent,
+} from "wuzapi";
+
+// Type-safe event handling with full message structure
+async function handleTypedMessage(event: MessageEvent) {
+  const messageContent = getMessageContent(event.Message);
+
+  if (messageContent?.type === "image") {
+    // TypeScript knows this is an ImageMessage
+    const imageMsg: ImageMessage = messageContent.content;
+    console.log(`Image dimensions: ${imageMsg.width}x${imageMsg.height}`);
+    console.log(`File size: ${imageMsg.fileLength} bytes`);
+
+    // Full type safety and autocompletion
+    if (imageMsg.caption) {
+      console.log(`Caption: ${imageMsg.caption}`);
+    }
+  }
+
+  if (messageContent?.type === "buttons") {
+    // TypeScript knows this is a ButtonsMessage
+    const buttonsMsg: ButtonsMessage = messageContent.content;
+    console.log(`Button message: ${buttonsMsg.contentText}`);
+
+    buttonsMsg.buttons?.forEach((button, index) => {
+      console.log(`Button ${index + 1}: ${button.buttonText?.displayText}`);
+    });
+  }
+}
+
+// Helper function to handle all message types generically
+function processMessageContent(content: MessageContent) {
+  switch (content.type) {
+    case "text":
+      // content.content is string
+      return content.content.toUpperCase();
+
+    case "image":
+      // content.content is ImageMessage
+      return `Image: ${content.content.caption || "No caption"}`;
+
+    case "video":
+      // content.content is VideoMessage
+      return `Video (${content.content.seconds}s): ${
+        content.content.caption || "No caption"
+      }`;
+
+    // TypeScript ensures you handle all possible types
+    default:
+      return `Unknown message type: ${content.type}`;
+  }
+}
+```
+
+### Advanced Message Type Handling
+
+For complex message processing, you can work directly with the typed message structures:
+
+```typescript
+import {
+  Message,
+  ExtendedTextMessage,
+  ButtonsMessage,
+  ContextInfo,
+} from "wuzapi";
+
+// Check for extended text with link preview
+function hasLinkPreview(message: Message): boolean {
+  return !!message.extendedTextMessage?.canonicalUrl;
+}
+
+// Extract context info from any message
+function getMessageContext(message: Message): ContextInfo | undefined {
+  // Check various message types for context info
+  return (
+    message.extendedTextMessage?.contextInfo ||
+    message.imageMessage?.contextInfo ||
+    message.videoMessage?.contextInfo ||
+    message.audioMessage?.contextInfo
+  );
+}
+
+// Process interactive messages
+function handleInteractiveMessage(message: Message) {
+  if (message.buttonsMessage) {
+    const btns = message.buttonsMessage;
+    console.log(`Interactive message: ${btns.contentText}`);
+
+    btns.buttons?.forEach((button) => {
+      if (button.type === ButtonType.RESPONSE) {
+        console.log(`Response button: ${button.buttonText?.displayText}`);
+      } else if (button.type === ButtonType.NATIVE_FLOW) {
+        console.log(`Native flow: ${button.nativeFlowInfo?.name}`);
+      }
+    });
+  }
+
+  if (message.listMessage) {
+    const list = message.listMessage;
+    console.log(`List: ${list.title}`);
+
+    list.sections?.forEach((section) => {
+      console.log(`Section: ${section.title}`);
+      section.rows?.forEach((row) => {
+        console.log(`- ${row.title}: ${row.description}`);
+      });
+    });
+  }
+}
 ```
 
 ## Error Handling
@@ -400,6 +1115,12 @@ if (isConnected) {
 ```
 
 ## Examples
+
+For complete working examples, check the `examples/` directory:
+
+- **`basic-usage.js`** - Basic client setup and usage
+- **`chatbot-example.js`** - Simple chatbot with command handling
+- **`webhook-events-example.js`** - Comprehensive webhook event handling
 
 ### Complete Chat Bot Example
 

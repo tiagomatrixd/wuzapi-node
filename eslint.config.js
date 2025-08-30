@@ -21,6 +21,7 @@ export default [
       "@typescript-eslint/no-unused-vars": "error",
       "@typescript-eslint/explicit-function-return-type": "warn",
       "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/consistent-type-imports": "off",
       "prefer-const": "error",
       "no-var": "error",

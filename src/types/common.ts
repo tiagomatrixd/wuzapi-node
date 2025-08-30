@@ -11,7 +11,7 @@ export interface WuzapiResponse<T = unknown> {
   success: boolean;
 }
 
-export interface ContextInfo {
+export interface SimpleContextInfo {
   StanzaId: string;
   Participant: string;
 }
