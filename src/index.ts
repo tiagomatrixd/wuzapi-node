@@ -14,6 +14,7 @@ export { UserModule } from "./modules/user.js";
 export { ChatModule } from "./modules/chat.js";
 export { GroupModule } from "./modules/group.js";
 export { WebhookModule } from "./modules/webhook.js";
+export { NewsletterModule } from "./modules/newsletter.js";
 
 // Default export
 export { WuzapiClient as default } from "./wuzapi-client.js";

@@ -69,7 +69,7 @@ export class BaseClient {
   }
 
   protected async request<T>(
-    method: "GET" | "POST" | "DELETE",
+    method: "GET" | "POST" | "DELETE" | "PUT",
     endpoint: string,
     data?: unknown,
     options?: RequestOptions
@@ -109,6 +109,14 @@ export class BaseClient {
     options?: RequestOptions
   ): Promise<T> {
     return this.request<T>("POST", endpoint, data, options);
+  }
+
+  protected async put<T>(
+    endpoint: string,
+    data?: unknown,
+    options?: RequestOptions
+  ): Promise<T> {
+    return this.request<T>("PUT", endpoint, data, options);
   }
 
   protected async delete<T>(

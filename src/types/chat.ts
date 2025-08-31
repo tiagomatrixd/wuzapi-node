@@ -110,3 +110,68 @@ export interface DownloadMediaRequest {
 export interface DownloadMediaResponse {
   [key: string]: unknown; // Base64 encoded media data
 }
+
+export interface DeleteMessageRequest {
+  Phone: string;
+  Id: string;
+  Remote?: boolean;
+}
+
+export interface DeleteMessageResponse {
+  Details: string;
+}
+
+export interface ChatButton {
+  ButtonId: string;
+  ButtonText: {
+    DisplayText: string;
+  };
+  Type: number;
+}
+
+export interface SendButtonsRequest {
+  Phone: string;
+  Body: string;
+  Footer?: string;
+  Buttons: ChatButton[];
+  ContextInfo?: SimpleContextInfo;
+}
+
+export interface ListItem {
+  Title: string;
+  Description?: string;
+  RowId: string;
+}
+
+export interface ListSection {
+  Title: string;
+  Rows: ListItem[];
+}
+
+export interface SendListRequest {
+  Phone: string;
+  Body: string;
+  Footer?: string;
+  Title: string;
+  ButtonText: string;
+  Sections: ListSection[];
+  ContextInfo?: SimpleContextInfo;
+}
+
+export interface ChatPollOption {
+  Name: string;
+}
+
+export interface SendPollRequest {
+  Phone: string;
+  Name: string;
+  Options: ChatPollOption[];
+  SelectableCount?: number;
+  ContextInfo?: SimpleContextInfo;
+}
+
+export interface EditMessageRequest {
+  Phone: string;
+  MessageId: string;
+  NewText: string;
+}

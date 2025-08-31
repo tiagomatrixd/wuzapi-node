@@ -65,3 +65,9 @@ export interface Contact {
 export interface ContactsResponse {
   [jid: string]: Contact;
 }
+
+export interface UserPresenceRequest {
+  Phone: string;
+  State: "available" | "unavailable";
+  LastSeen?: number;
+}

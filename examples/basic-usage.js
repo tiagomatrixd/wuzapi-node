@@ -5,19 +5,19 @@
 import WuzapiClient from "wuzapi";
 
 // Method 1: Traditional usage with global token
-const clientWithGlobalToken = new WuzapiClient({
+const adminClient = new WuzapiClient({
   apiUrl: "http://localhost:8080", // Your WuzAPI server URL
   token: "your-user-token-here", // Your user authentication token
 });
 
 // Method 2: Flexible usage - no global token (or admin token as default)
-const clientFlexible = new WuzapiClient({
+const userClient = new WuzapiClient({
   apiUrl: "http://localhost:8080", // Your WuzAPI server URL
   // token is optional - can be provided per request
 });
 
 // For this example, we'll use the traditional approach
-const client = clientWithGlobalToken;
+const client = adminClient;
 
 async function basicExample() {
   try {
@@ -30,6 +30,17 @@ async function basicExample() {
       return;
     }
     console.log("✅ Connected to WuzAPI server");
+
+    // Optional: Configure proxy before connecting (uncomment if needed)
+    /*
+    console.log("🔧 Configuring proxy...");
+    try {
+      await client.session.setProxy("socks5://username:password@proxy-server:1080");
+      console.log("✅ Proxy configured");
+    } catch (proxyError) {
+      console.log("⚠️ Proxy configuration failed:", proxyError.message);
+    }
+    */
 
     // Connect to WhatsApp
     console.log("🔄 Connecting to WhatsApp...");
@@ -45,12 +56,38 @@ async function basicExample() {
       loggedIn: status.LoggedIn,
     });
 
-    // If not logged in, get QR code
+    // If not logged in, offer options: QR code or phone pairing
     if (status.Connected && !status.LoggedIn) {
-      console.log("📱 Getting QR code for WhatsApp login...");
+      console.log("📱 Not logged in. Choose login method:");
+
+      // Option 1: QR Code (traditional)
+      console.log("📷 Option 1: QR Code login");
       const qr = await client.session.getQRCode();
       console.log("📷 Scan this QR code with WhatsApp:", qr.QRCode);
       console.log("⏳ Waiting for QR code scan...");
+
+      // Option 2: Phone pairing (alternative)
+      console.log("\n📞 Option 2: Phone pairing");
+      console.log("💡 To use phone pairing instead:");
+      console.log("   1. Uncomment the pairPhone example below");
+      console.log("   2. Replace with your phone number");
+      console.log("   3. You'll receive an SMS/call with verification code");
+
+      /*
+      // Phone pairing example - uncomment and modify:
+      try {
+        const phoneNumber = "5491155554444"; // Your phone number with country code
+        console.log(`📱 Requesting pairing code for ${phoneNumber}...`);
+        
+        // You'll receive verification code via SMS/call
+        const verificationCode = "123456"; // Replace with actual code
+        
+        const pairResult = await client.session.pairPhone(phoneNumber, verificationCode);
+        console.log("✅ Pairing result:", pairResult.Details);
+      } catch (pairError) {
+        console.error("❌ Phone pairing failed:", pairError.message);
+      }
+      */
     }
 
     // Example: Send a text message (uncomment when ready)
@@ -78,6 +115,59 @@ async function basicExample() {
       const groups = await client.group.list();
       console.log(`👥 Found ${groups.Groups.length} groups`);
     }
+
+    // Example: Request message history sync (useful after login)
+    if (status.LoggedIn) {
+      console.log("📚 Requesting message history sync...");
+      try {
+        await client.session.requestHistory();
+        console.log("✅ History sync requested");
+      } catch (error) {
+        console.log("⚠️ History sync failed:", error.message);
+      }
+    }
+
+    // Advanced examples (uncomment to test)
+    if (status.LoggedIn) {
+      console.log("\n🚀 Advanced features available:");
+      console.log("📋 Uncomment below to test new message types:");
+
+      /*
+      // Interactive buttons example
+      await client.chat.sendButtons({
+        Phone: '5491155554444',
+        Body: 'Choose an option:',
+        Footer: 'WuzAPI Bot',
+        Buttons: [
+          { ButtonId: 'btn1', ButtonText: { DisplayText: 'Option 1' }, Type: 1 },
+          { ButtonId: 'btn2', ButtonText: { DisplayText: 'Option 2' }, Type: 1 }
+        ]
+      });
+
+      // List message example
+      await client.chat.sendList({
+        Phone: '5491155554444',
+        Body: 'Select from menu:',
+        Title: 'Menu',
+        ButtonText: 'View Options',
+        Sections: [{
+          Title: 'Options',
+          Rows: [
+            { Title: 'Option A', Description: 'First option', RowId: 'opt_a' },
+            { Title: 'Option B', Description: 'Second option', RowId: 'opt_b' }
+          ]
+        }]
+      });
+
+      // Poll example
+      await client.chat.sendPoll({
+        Phone: '5491155554444',
+        Name: 'Favorite color?',
+        Options: [{ Name: 'Red' }, { Name: 'Blue' }, { Name: 'Green' }],
+        SelectableCount: 1
+      });
+      */
+    }
   } catch (error) {
     console.error("❌ Error:", error.message);
     if (error.code) {
@@ -100,7 +190,7 @@ async function flexibleTokenExample() {
     const adminToken = "admin-token-here";
 
     // Test connectivity with user token
-    const isConnected = await clientFlexible.ping({ token: userToken });
+    const isConnected = await userClient.ping({ token: userToken });
     if (!isConnected) {
       console.error("❌ Cannot connect to WuzAPI server");
       return;
@@ -109,7 +199,7 @@ async function flexibleTokenExample() {
 
     // Connect to WhatsApp with user token
     console.log("🔄 Connecting to WhatsApp with user token...");
-    await clientFlexible.session.connect(
+    await userClient.session.connect(
       {
         Subscribe: ["Message", "ReadReceipt"],
         Immediate: false,
@@ -118,7 +208,7 @@ async function flexibleTokenExample() {
     );
 
     // Check status with user token
-    const status = await clientFlexible.session.getStatus({ token: userToken });
+    const status = await userClient.session.getStatus({ token: userToken });
     console.log("📱 WhatsApp Status:", {
       connected: status.Connected,
       loggedIn: status.LoggedIn,
@@ -129,7 +219,7 @@ async function flexibleTokenExample() {
       console.log("📤 Sending message with user token...");
       // Uncomment and update phone number when ready
       /*
-      const response = await clientFlexible.chat.sendText(
+      const response = await userClient.chat.sendText(
         {
           Phone: '5491155554444',
           Body: 'Hello from flexible token usage! 🚀'
@@ -143,7 +233,7 @@ async function flexibleTokenExample() {
     // Admin operations with admin token
     console.log("👨‍💼 Performing admin operations with admin token...");
     try {
-      const users = await clientFlexible.admin.listUsers({ token: adminToken });
+      const users = await userClient.admin.listUsers({ token: adminToken });
       console.log(`👥 Found ${users.length} users in system`);
     } catch (error) {
       console.log("⚠️ Admin operations require valid admin token");

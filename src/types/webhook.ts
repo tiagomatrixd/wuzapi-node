@@ -13,6 +13,18 @@ export interface GetWebhookResponse {
   webhook: string;
 }
 
+export interface UpdateWebhookRequest {
+  webhookURL: string;
+}
+
+export interface UpdateWebhookResponse {
+  webhook: string;
+}
+
+export interface DeleteWebhookResponse {
+  Details: string;
+}
+
 // Webhook payload types (what your webhook endpoint receives)
 
 export interface S3MediaInfo {

@@ -18,6 +18,18 @@ import {
   GroupEphemeralResponse,
   GroupPhotoRemoveRequest,
   GroupPhotoRemoveResponse,
+  GroupLeaveRequest,
+  GroupLeaveResponse,
+  GroupTopicRequest,
+  GroupTopicResponse,
+  GroupAnnounceRequest,
+  GroupAnnounceResponse,
+  GroupJoinRequest,
+  GroupJoinResponse,
+  GroupInviteInfoRequest,
+  GroupInviteInfoResponse,
+  GroupUpdateParticipantsRequest,
+  GroupUpdateParticipantsResponse,
 } from "../types/group.js";
 
 export class GroupModule extends BaseClient {
@@ -128,6 +140,95 @@ export class GroupModule extends BaseClient {
     const request: GroupPhotoRemoveRequest = { groupjid: groupJID };
     return this.post<GroupPhotoRemoveResponse>(
       "/group/photo/remove",
+      request,
+      options
+    );
+  }
+
+  /**
+   * Leave a group
+   */
+  async leave(
+    groupJID: string,
+    options?: RequestOptions
+  ): Promise<GroupLeaveResponse> {
+    const request: GroupLeaveRequest = { GroupJID: groupJID };
+    return this.post<GroupLeaveResponse>("/group/leave", request, options);
+  }
+
+  /**
+   * Set group topic/description
+   */
+  async setTopic(
+    groupJID: string,
+    topic: string,
+    options?: RequestOptions
+  ): Promise<GroupTopicResponse> {
+    const request: GroupTopicRequest = { GroupJID: groupJID, Topic: topic };
+    return this.post<GroupTopicResponse>("/group/topic", request, options);
+  }
+
+  /**
+   * Set group announcement setting (only admins can send messages)
+   */
+  async setAnnounce(
+    groupJID: string,
+    announce: boolean,
+    options?: RequestOptions
+  ): Promise<GroupAnnounceResponse> {
+    const request: GroupAnnounceRequest = {
+      GroupJID: groupJID,
+      Announce: announce,
+    };
+    return this.post<GroupAnnounceResponse>(
+      "/group/announce",
+      request,
+      options
+    );
+  }
+
+  /**
+   * Join a group using invite link
+   */
+  async join(
+    inviteLink: string,
+    options?: RequestOptions
+  ): Promise<GroupJoinResponse> {
+    const request: GroupJoinRequest = { InviteLink: inviteLink };
+    return this.post<GroupJoinResponse>("/group/join", request, options);
+  }
+
+  /**
+   * Get group invite information
+   */
+  async getInviteInfo(
+    inviteLink: string,
+    options?: RequestOptions
+  ): Promise<GroupInviteInfoResponse> {
+    const request: GroupInviteInfoRequest = { InviteLink: inviteLink };
+    return this.post<GroupInviteInfoResponse>(
+      "/group/inviteinfo",
+      request,
+      options
+    );
+  }
+
+  /**
+   * Update group participants (add/remove/promote/demote)
+   */
+  async updateParticipants(
+    groupJID: string,
+    action: "add" | "remove" | "promote" | "demote",
+    participants: string[],
+    options?: RequestOptions
+  ): Promise<GroupUpdateParticipantsResponse> {
+    const request: GroupUpdateParticipantsRequest = {
+      GroupJID: groupJID,
+      Action: action,
+      Participants: participants,
+    };
+    return this.post<GroupUpdateParticipantsResponse>(
+      "/group/updateparticipants",
       request,
       options
     );

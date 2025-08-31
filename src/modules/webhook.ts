@@ -4,6 +4,9 @@ import {
   SetWebhookRequest,
   SetWebhookResponse,
   GetWebhookResponse,
+  UpdateWebhookRequest,
+  UpdateWebhookResponse,
+  DeleteWebhookResponse,
 } from "../types/webhook.js";
 
 export class WebhookModule extends BaseClient {
@@ -23,5 +26,25 @@ export class WebhookModule extends BaseClient {
    */
   async getWebhook(options?: RequestOptions): Promise<GetWebhookResponse> {
     return this.get<GetWebhookResponse>("/webhook", options);
+  }
+
+  /**
+   * Update webhook URL
+   */
+  async updateWebhook(
+    webhookURL: string,
+    options?: RequestOptions
+  ): Promise<UpdateWebhookResponse> {
+    const request: UpdateWebhookRequest = { webhookURL };
+    return this.put<UpdateWebhookResponse>("/webhook", request, options);
+  }
+
+  /**
+   * Delete webhook configuration
+   */
+  async deleteWebhook(
+    options?: RequestOptions
+  ): Promise<DeleteWebhookResponse> {
+    return this.delete<DeleteWebhookResponse>("/webhook", options);
   }
 }

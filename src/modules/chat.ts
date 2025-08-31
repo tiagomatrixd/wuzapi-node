@@ -16,6 +16,12 @@ import {
   ReactRequest,
   DownloadMediaRequest,
   DownloadMediaResponse,
+  DeleteMessageRequest,
+  DeleteMessageResponse,
+  SendButtonsRequest,
+  SendListRequest,
+  SendPollRequest,
+  EditMessageRequest,
 } from "../types/chat.js";
 
 export class ChatModule extends BaseClient {
@@ -213,5 +219,59 @@ export class ChatModule extends BaseClient {
       request,
       options
     );
+  }
+
+  /**
+   * Delete a message
+   */
+  async deleteMessage(
+    request: DeleteMessageRequest,
+    options?: RequestOptions
+  ): Promise<DeleteMessageResponse> {
+    return this.post<DeleteMessageResponse>("/chat/delete", request, options);
+  }
+
+  /**
+   * Send interactive buttons message
+   */
+  async sendButtons(
+    request: SendButtonsRequest,
+    options?: RequestOptions
+  ): Promise<SendMessageResponse> {
+    return this.post<SendMessageResponse>(
+      "/chat/send/buttons",
+      request,
+      options
+    );
+  }
+
+  /**
+   * Send list message
+   */
+  async sendList(
+    request: SendListRequest,
+    options?: RequestOptions
+  ): Promise<SendMessageResponse> {
+    return this.post<SendMessageResponse>("/chat/send/list", request, options);
+  }
+
+  /**
+   * Send poll message
+   */
+  async sendPoll(
+    request: SendPollRequest,
+    options?: RequestOptions
+  ): Promise<SendMessageResponse> {
+    return this.post<SendMessageResponse>("/chat/send/poll", request, options);
+  }
+
+  /**
+   * Edit a message
+   */
+  async editMessage(
+    request: EditMessageRequest,
+    options?: RequestOptions
+  ): Promise<SendMessageResponse> {
+    return this.post<SendMessageResponse>("/chat/send/edit", request, options);
   }
 }

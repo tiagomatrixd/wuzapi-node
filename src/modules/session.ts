@@ -8,6 +8,11 @@ import {
   QRCodeResponse,
   S3ConfigResponse,
   S3TestResponse,
+  PairPhoneRequest,
+  PairPhoneResponse,
+  HistoryResponse,
+  ProxyRequest,
+  ProxyResponse,
 } from "../types/session.js";
 import { S3Config, RequestOptions } from "../types/common.js";
 
@@ -83,5 +88,35 @@ export class SessionModule extends BaseClient {
    */
   async deleteS3Config(options?: RequestOptions): Promise<{ Details: string }> {
     return this.delete<{ Details: string }>("/session/s3/config", options);
+  }
+
+  /**
+   * Pair phone using verification code
+   */
+  async pairPhone(
+    phone: string,
+    code: string,
+    options?: RequestOptions
+  ): Promise<PairPhoneResponse> {
+    const request: PairPhoneRequest = { Phone: phone, Code: code };
+    return this.post<PairPhoneResponse>("/session/pairphone", request, options);
+  }
+
+  /**
+   * Request history sync from WhatsApp servers
+   */
+  async requestHistory(options?: RequestOptions): Promise<HistoryResponse> {
+    return this.get<HistoryResponse>("/session/history", options);
+  }
+
+  /**
+   * Set proxy configuration
+   */
+  async setProxy(
+    proxy: string,
+    options?: RequestOptions
+  ): Promise<ProxyResponse> {
+    const request: ProxyRequest = { Proxy: proxy };
+    return this.post<ProxyResponse>("/session/proxy", request, options);
   }
 }

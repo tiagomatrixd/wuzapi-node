@@ -40,3 +40,24 @@ export interface S3TestResponse {
   Bucket: string;
   Region: string;
 }
+
+export interface PairPhoneRequest {
+  Phone: string;
+  Code: string;
+}
+
+export interface PairPhoneResponse {
+  Details: string;
+}
+
+export interface HistoryResponse {
+  Details: string;
+}
+
+export interface ProxyRequest {
+  Proxy: string;
+}
+
+export interface ProxyResponse {
+  Details: string;
+}

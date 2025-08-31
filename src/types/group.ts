@@ -93,3 +93,68 @@ export interface GroupPhotoRemoveRequest {
 export interface GroupPhotoRemoveResponse {
   Details: string;
 }
+
+export interface GroupLeaveRequest {
+  GroupJID: string;
+}
+
+export interface GroupLeaveResponse {
+  Details: string;
+}
+
+export interface GroupTopicRequest {
+  GroupJID: string;
+  Topic: string;
+}
+
+export interface GroupTopicResponse {
+  Details: string;
+}
+
+export interface GroupAnnounceRequest {
+  GroupJID: string;
+  Announce: boolean;
+}
+
+export interface GroupAnnounceResponse {
+  Details: string;
+}
+
+export interface GroupJoinRequest {
+  InviteLink: string;
+}
+
+export interface GroupJoinResponse {
+  GroupJID: string;
+  Details: string;
+}
+
+export interface GroupInviteInfoRequest {
+  InviteLink: string;
+}
+
+export interface GroupInviteInfoResponse {
+  GroupJID: string;
+  Name: string;
+  Description: string;
+  Subject: string;
+  Owner: string;
+  Creation: string;
+  ParticipantsCount: number;
+}
+
+export interface GroupUpdateParticipantsRequest {
+  GroupJID: string;
+  Action: "add" | "remove" | "promote" | "demote";
+  Participants: string[];
+}
+
+export interface ParticipantUpdate {
+  JID: string;
+  Status: string;
+  Code: number;
+}
+
+export interface GroupUpdateParticipantsResponse {
+  Updates: ParticipantUpdate[];
+}

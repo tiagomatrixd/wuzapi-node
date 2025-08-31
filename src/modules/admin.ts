@@ -26,6 +26,13 @@ export class AdminModule extends BaseClient {
   }
 
   /**
+   * Get a specific user by ID
+   */
+  async getUser(id: number, options?: RequestOptions): Promise<User> {
+    return this.get<User>(`/admin/users/${id}`, options);
+  }
+
+  /**
    * Delete a user by ID
    */
   async deleteUser(
@@ -33,5 +40,15 @@ export class AdminModule extends BaseClient {
     options?: RequestOptions
   ): Promise<DeleteUserResponse> {
     return this.delete<DeleteUserResponse>(`/admin/users/${id}`, options);
+  }
+
+  /**
+   * Delete a user completely (full deletion) by ID
+   */
+  async deleteUserComplete(
+    id: number,
+    options?: RequestOptions
+  ): Promise<DeleteUserResponse> {
+    return this.delete<DeleteUserResponse>(`/admin/users/${id}/full`, options);
   }
 }

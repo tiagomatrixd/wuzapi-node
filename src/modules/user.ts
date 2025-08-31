@@ -8,6 +8,7 @@ import {
   UserAvatarRequest,
   UserAvatarResponse,
   ContactsResponse,
+  UserPresenceRequest,
 } from "../types/user.js";
 
 export class UserModule extends BaseClient {
@@ -50,5 +51,15 @@ export class UserModule extends BaseClient {
    */
   async getContacts(options?: RequestOptions): Promise<ContactsResponse> {
     return this.get<ContactsResponse>("/user/contacts", options);
+  }
+
+  /**
+   * Send user presence (available/unavailable status)
+   */
+  async sendPresence(
+    request: UserPresenceRequest,
+    options?: RequestOptions
+  ): Promise<void> {
+    await this.post<void>("/user/presence", request, options);
   }
 }
