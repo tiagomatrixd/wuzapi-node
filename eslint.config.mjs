@@ -28,7 +28,7 @@ export default [
     },
   },
   {
-    files: ["vite.config.ts", "eslint.config.js"],
+    files: ["vite.config.ts", "eslint.config.mjs"],
     languageOptions: {
       parser: typescriptParser,
       parserOptions: {
