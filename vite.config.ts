@@ -27,7 +27,7 @@ export default defineConfig({
         "modules/newsletter": resolve(__dirname, "src/modules/newsletter.ts"),
         "types/index": resolve(__dirname, "src/types/index.ts"),
       },
-      formats: ["es"],
+      formats: ["cjs"],
     },
     rollupOptions: {
       external: ["axios"],
