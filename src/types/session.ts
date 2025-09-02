@@ -46,7 +46,7 @@ export interface PairPhoneRequest {
 }
 
 export interface PairPhoneResponse {
-  Details: string;
+  LinkingCode: string;
 }
 
 export interface HistoryResponse {
@@ -54,8 +54,8 @@ export interface HistoryResponse {
 }
 
 export interface ProxyRequest {
-  ProxyURL: string;
-  Enable: boolean;
+  proxy_url: string;
+  enable: boolean;
 }
 
 export interface ProxyResponse {

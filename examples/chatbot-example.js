@@ -195,7 +195,7 @@ async function initializeBot() {
 
     // Set webhook
     const webhookUrl = "http://localhost:3000/webhook"; // Update with your webhook URL
-    await client.webhook.setWebhook(webhookUrl, getRequestOptions());
+    await client.webhook.setWebhook(webhookUrl, ["All"], getRequestOptions());
     console.log(`🔗 Webhook set to: ${webhookUrl}`);
 
     // Start Express server

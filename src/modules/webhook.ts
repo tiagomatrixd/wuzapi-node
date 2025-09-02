@@ -15,9 +15,10 @@ export class WebhookModule extends BaseClient {
    */
   async setWebhook(
     webhookURL: string,
+    events: string[] = ["All"],
     options?: RequestOptions
   ): Promise<SetWebhookResponse> {
-    const request: SetWebhookRequest = { webhookURL };
+    const request: SetWebhookRequest = { webhook: webhookURL, events };
     return this.post<SetWebhookResponse>("/webhook", request, options);
   }
 
@@ -29,13 +30,19 @@ export class WebhookModule extends BaseClient {
   }
 
   /**
-   * Update webhook URL
+   * Update webhook URL, events, and activation status
    */
   async updateWebhook(
-    webhookURL: string,
+    webhookURL?: string,
+    events?: string[],
+    active?: boolean,
     options?: RequestOptions
   ): Promise<UpdateWebhookResponse> {
-    const request: UpdateWebhookRequest = { webhookURL };
+    const request: UpdateWebhookRequest = {
+      webhook: webhookURL,
+      events,
+      Active: active,
+    };
     return this.put<UpdateWebhookResponse>("/webhook", request, options);
   }
 

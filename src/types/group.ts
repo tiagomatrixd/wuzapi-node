@@ -134,13 +134,10 @@ export interface GroupInviteInfoRequest {
 }
 
 export interface GroupInviteInfoResponse {
-  GroupJID: string;
-  Name: string;
-  Description: string;
-  Subject: string;
-  Owner: string;
-  Creation: string;
-  ParticipantsCount: number;
+  InviteInfo: {
+    GroupName: string;
+    GroupJID: string;
+  };
 }
 
 export interface GroupUpdateParticipantsRequest {

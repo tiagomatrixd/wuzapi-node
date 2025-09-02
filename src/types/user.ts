@@ -67,5 +67,9 @@ export interface ContactsResponse {
 }
 
 export interface UserPresenceRequest {
-  Type: "available" | "unavailable";
+  type: "available" | "unavailable";
+}
+
+export interface UserPresenceResponse {
+  Details: string;
 }

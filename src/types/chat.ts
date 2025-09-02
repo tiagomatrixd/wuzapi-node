@@ -113,9 +113,7 @@ export interface DownloadMediaResponse {
 }
 
 export interface DeleteMessageRequest {
-  Phone: string;
   Id: string;
-  Remote?: boolean;
 }
 
 export interface DeleteMessageResponse {
@@ -172,7 +170,7 @@ export interface SendPollRequest {
 }
 
 export interface EditMessageRequest {
+  Id: string;
   Phone: string;
-  MessageId: string;
-  NewText: string;
+  Body: string;
 }

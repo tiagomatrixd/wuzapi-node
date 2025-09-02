@@ -661,8 +661,8 @@ async function initializeWebhookServer() {
     // Set webhook URL
     const webhookUrl =
       process.env.WEBHOOK_URL || "http://localhost:3000/webhook";
-    await client.webhook.setWebhook(webhookUrl);
-    // With flexible tokens: await client.webhook.setWebhook(webhookUrl, { token: "user-specific-token" });
+    await client.webhook.setWebhook(webhookUrl, ["All"]);
+    // With flexible tokens: await client.webhook.setWebhook(webhookUrl, ["All"], { token: "user-specific-token" });
     console.log(`🔗 Webhook configured: ${webhookUrl}`);
 
     // Start the server

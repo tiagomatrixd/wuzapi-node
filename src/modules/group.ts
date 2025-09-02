@@ -2,9 +2,7 @@ import { BaseClient } from "../client.js";
 import { RequestOptions } from "../types/common.js";
 import {
   GroupListResponse,
-  GroupInviteLinkRequest,
   GroupInviteLinkResponse,
-  GroupInfoRequest,
   GroupInfo,
   GroupPhotoRequest,
   GroupPhotoResponse,
@@ -45,12 +43,12 @@ export class GroupModule extends BaseClient {
    */
   async getInviteLink(
     groupJID: string,
+    reset: boolean = false,
     options?: RequestOptions
   ): Promise<GroupInviteLinkResponse> {
-    const request: GroupInviteLinkRequest = { GroupJID: groupJID };
-    return this.post<GroupInviteLinkResponse>(
-      "/group/invitelink",
-      request,
+    const params = `groupJID=${encodeURIComponent(groupJID)}&reset=${reset}`;
+    return this.get<GroupInviteLinkResponse>(
+      `/group/invitelink?${params}`,
       options
     );
   }
@@ -62,8 +60,8 @@ export class GroupModule extends BaseClient {
     groupJID: string,
     options?: RequestOptions
   ): Promise<GroupInfo> {
-    const request: GroupInfoRequest = { GroupJID: groupJID };
-    return this.post<GroupInfo>("/group/info", request, options);
+    const params = `groupJID=${encodeURIComponent(groupJID)}`;
+    return this.get<GroupInfo>(`/group/info?${params}`, options);
   }
 
   /**

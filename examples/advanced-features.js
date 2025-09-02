@@ -161,22 +161,18 @@ async function messageManagementExample() {
 
     // Edit the message
     console.log("✏️ Editing message...");
-    await client.chat.editMessage({
-      Phone: testPhone,
-      MessageId: messageId,
-      NewText: "This message has been edited! ✏️",
-    });
+    await client.chat.editMessage(
+      messageId,
+      testPhone,
+      "This message has been edited! ✏️"
+    );
 
     // Wait a moment
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     // Delete the message
     console.log("🗑️ Deleting message...");
-    await client.chat.deleteMessage({
-      Phone: testPhone,
-      Id: messageId,
-      Remote: true, // Delete for everyone
-    });
+    await client.chat.deleteMessage(messageId);
 
     console.log("✅ Message management completed");
   } catch (error) {

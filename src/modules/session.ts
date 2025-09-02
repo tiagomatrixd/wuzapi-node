@@ -116,7 +116,7 @@ export class SessionModule extends BaseClient {
     enable: boolean = true,
     options?: RequestOptions
   ): Promise<ProxyResponse> {
-    const request: ProxyRequest = { ProxyURL: proxyURL, Enable: enable };
+    const request: ProxyRequest = { proxy_url: proxyURL, enable: enable };
     return this.post<ProxyResponse>("/session/proxy", request, options);
   }
 }

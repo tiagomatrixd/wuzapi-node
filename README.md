@@ -184,14 +184,21 @@ await client.user.sendPresence("available");
 ## 🔗 Webhook Setup
 
 ```typescript
-// Set webhook URL
-await client.webhook.setWebhook("https://your-server.com/webhook");
+// Set webhook URL with events
+await client.webhook.setWebhook("https://your-server.com/webhook", [
+  "Message",
+  "ReadReceipt",
+]);
 
 // Get webhook config
 const config = await client.webhook.getWebhook();
 
-// Update webhook
-await client.webhook.updateWebhook("https://new-server.com/webhook");
+// Update webhook with new URL, events, and status
+await client.webhook.updateWebhook(
+  "https://new-server.com/webhook",
+  ["Message", "ReadReceipt"],
+  true
+);
 ```
 
 ## 📚 Examples
@@ -228,7 +235,7 @@ const client = new WuzapiClient({
 
 // Connect and wait for messages
 await client.session.connect({ Subscribe: ["Message"] });
-await client.webhook.setWebhook("https://your-server.com/webhook");
+await client.webhook.setWebhook("https://your-server.com/webhook", ["Message"]);
 
 // In your webhook handler:
 app.post("/webhook", async (req, res) => {
@@ -425,18 +432,14 @@ await client.chat.sendPoll(
 
 ```typescript
 // Delete a message
-await client.chat.deleteMessage({
-  Phone: "5491155554444",
-  Id: "message-id-to-delete",
-  Remote: true, // Delete for everyone
-});
+await client.chat.deleteMessage("message-id-to-delete");
 
 // Edit a message
-await client.chat.editMessage({
-  Phone: "5491155554444",
-  MessageId: "message-id-to-edit",
-  NewText: "This is the updated message text",
-});
+await client.chat.editMessage(
+  "message-id-to-edit",
+  "5491155554444",
+  "This is the updated message text"
+);
 
 // React to message
 await client.chat.react({
@@ -606,16 +609,13 @@ await client.group.updateParticipants(
 // List all users
 const users = await client.admin.listUsers({ token: "admin-token" });
 
-// Get a specific user by ID
-const user = await client.admin.getUser(2, { token: "admin-token" });
-
 // Add new user
 const newUser = await client.admin.addUser(
   {
     name: "John Doe",
     token: "user-token-123",
     webhook: "https://example.com/webhook",
-    events: "Message,ReadReceipt",
+    events: "Message,ReadReceipt", // optional
     proxyConfig: {
       enabled: true,
       proxyURL: "socks5://user:pass@proxy:port",
@@ -635,11 +635,13 @@ const newUser = await client.admin.addUser(
   { token: "admin-token" }
 );
 
-// Delete user
-await client.admin.deleteUser(2, { token: "admin-token" });
+// Delete user by ID (ID is a string)
+await client.admin.deleteUser("user-id-string", { token: "admin-token" });
 
 // Delete user completely (full deletion including all data)
-await client.admin.deleteUserComplete(2, { token: "admin-token" });
+await client.admin.deleteUserComplete("user-id-string", {
+  token: "admin-token",
+});
 ```
 
 </details>
@@ -648,16 +650,23 @@ await client.admin.deleteUserComplete(2, { token: "admin-token" });
 <summary><strong>🔗 Webhook Module</strong> - Webhook configuration</summary>
 
 ```typescript
-// Set webhook URL
-await client.webhook.setWebhook("https://my-server.com/webhook");
+// Set webhook URL with specific events
+await client.webhook.setWebhook("https://my-server.com/webhook", [
+  "Message",
+  "ReadReceipt",
+]);
 
 // Get current webhook configuration
 const webhookConfig = await client.webhook.getWebhook();
 console.log("Webhook URL:", webhookConfig.webhook);
 console.log("Subscribed events:", webhookConfig.subscribe);
 
-// Update webhook URL
-await client.webhook.updateWebhook("https://my-new-server.com/webhook");
+// Update webhook URL, events, and status
+await client.webhook.updateWebhook(
+  "https://my-new-server.com/webhook",
+  ["Message", "ReadReceipt", "Presence"],
+  true
+);
 
 // Delete webhook configuration
 await client.webhook.deleteWebhook();

@@ -1,11 +1,13 @@
 // Webhook endpoints types
 
 export interface SetWebhookRequest {
-  webhookURL: string;
+  webhook: string;
+  events: string[];
 }
 
 export interface SetWebhookResponse {
-  webhook: string;
+  WebhookURL: string;
+  Events: string[];
 }
 
 export interface GetWebhookResponse {
@@ -14,11 +16,15 @@ export interface GetWebhookResponse {
 }
 
 export interface UpdateWebhookRequest {
-  webhookURL: string;
+  webhook?: string;
+  events?: string[];
+  Active?: boolean;
 }
 
 export interface UpdateWebhookResponse {
-  webhook: string;
+  WebhookURL: string;
+  Events: string[];
+  active: boolean;
 }
 
 export interface DeleteWebhookResponse {

@@ -226,9 +226,10 @@ export class ChatModule extends BaseClient {
    * Delete a message
    */
   async deleteMessage(
-    request: DeleteMessageRequest,
+    messageId: string,
     options?: RequestOptions
   ): Promise<DeleteMessageResponse> {
+    const request: DeleteMessageRequest = { Id: messageId };
     return this.post<DeleteMessageResponse>("/chat/delete", request, options);
   }
 
@@ -298,9 +299,16 @@ export class ChatModule extends BaseClient {
    * Edit a message
    */
   async editMessage(
-    request: EditMessageRequest,
+    messageId: string,
+    phone: string,
+    newBody: string,
     options?: RequestOptions
   ): Promise<SendMessageResponse> {
+    const request: EditMessageRequest = {
+      Id: messageId,
+      Phone: phone,
+      Body: newBody,
+    };
     return this.post<SendMessageResponse>("/chat/send/edit", request, options);
   }
 }
