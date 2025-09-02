@@ -40,12 +40,11 @@ async function phoneLoginExample() {
     // For this example, we'll simulate it
     const verificationCode = await promptForVerificationCode();
 
-    // Pair the phone
-    const result = await client.session.pairPhone(
-      phoneNumber,
-      verificationCode
-    );
-    console.log("✅ Pairing successful:", result.Details);
+    // Pair the phone - this generates the verification code
+    const result = await client.session.pairPhone(phoneNumber);
+    console.log("✅ Pairing request sent:", result.Details);
+    console.log("📱 Check your phone for verification code");
+    console.log("💡 Note: Enter the code in WhatsApp when prompted");
 
     // Wait for login confirmation
     await waitForLogin();
@@ -93,23 +92,24 @@ async function interactiveMessagesExample() {
 
     // 2. Send list message
     console.log("📤 Sending list message...");
-    await client.chat.sendList({
-      Phone: testPhone,
-      Body: "Please select from our services:",
-      Title: "Service Menu",
-      ButtonText: "View Services",
-      Sections: [
+    await client.chat.sendList(
+      testPhone, // Phone
+      "View Services", // Button text
+      "Please select from our services:", // Description
+      "Service Menu", // Top text/title
+      [
         {
+          // Sections
           Title: "Support",
           Rows: [
             {
               Title: "Technical Support",
-              Description: "Get help with technical issues",
+              Desc: "Get help with technical issues",
               RowId: "tech_support",
             },
             {
               Title: "Billing Support",
-              Description: "Questions about billing",
+              Desc: "Questions about billing",
               RowId: "billing_support",
             },
           ],
@@ -119,33 +119,18 @@ async function interactiveMessagesExample() {
           Rows: [
             {
               Title: "Product Info",
-              Description: "Learn about our products",
+              Desc: "Learn about our products",
               RowId: "product_info",
             },
             {
               Title: "Company Info",
-              Description: "About our company",
+              Desc: "About our company",
               RowId: "company_info",
             },
           ],
         },
-      ],
-    });
-
-    // 3. Send poll
-    console.log("📤 Sending poll...");
-    await client.chat.sendPoll({
-      Phone: testPhone,
-      Name: "How satisfied are you with our service?",
-      Options: [
-        { Name: "😍 Very Satisfied" },
-        { Name: "😊 Satisfied" },
-        { Name: "😐 Neutral" },
-        { Name: "😞 Dissatisfied" },
-        { Name: "😡 Very Dissatisfied" },
-      ],
-      SelectableCount: 1,
-    });
+      ]
+    );
 
     console.log("✅ Interactive messages sent successfully");
   } catch (error) {

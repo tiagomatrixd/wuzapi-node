@@ -22,6 +22,7 @@ import {
   SendListRequest,
   SendPollRequest,
   EditMessageRequest,
+  ListSection,
 } from "../types/chat.js";
 
 export class ChatModule extends BaseClient {
@@ -249,9 +250,24 @@ export class ChatModule extends BaseClient {
    * Send list message
    */
   async sendList(
-    request: SendListRequest,
+    phone: string,
+    buttonText: string,
+    description: string,
+    topText: string,
+    sections?: ListSection[],
+    footerText?: string,
+    id?: string,
     options?: RequestOptions
   ): Promise<SendMessageResponse> {
+    const request: SendListRequest = {
+      Phone: phone,
+      ButtonText: buttonText,
+      Desc: description,
+      TopText: topText,
+      Sections: sections,
+      FooterText: footerText,
+      Id: id,
+    };
     return this.post<SendMessageResponse>("/chat/send/list", request, options);
   }
 
@@ -259,10 +275,23 @@ export class ChatModule extends BaseClient {
    * Send poll message
    */
   async sendPoll(
-    request: SendPollRequest,
-    options?: RequestOptions
+    groupJID: string,
+    header: string,
+    options: string[],
+    id?: string,
+    requestOptions?: RequestOptions
   ): Promise<SendMessageResponse> {
-    return this.post<SendMessageResponse>("/chat/send/poll", request, options);
+    const request: SendPollRequest = {
+      Group: groupJID,
+      Header: header,
+      Options: options,
+      Id: id,
+    };
+    return this.post<SendMessageResponse>(
+      "/chat/send/poll",
+      request,
+      requestOptions
+    );
   }
 
   /**

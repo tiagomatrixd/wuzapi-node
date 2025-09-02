@@ -98,7 +98,10 @@ export class GroupModule extends BaseClient {
     participants: string[],
     options?: RequestOptions
   ): Promise<GroupCreateResponse> {
-    const request: GroupCreateRequest = { name, participants };
+    const request: GroupCreateRequest = {
+      Name: name,
+      Participants: participants,
+    };
     return this.post<GroupCreateResponse>("/group/create", request, options);
   }
 
@@ -110,7 +113,7 @@ export class GroupModule extends BaseClient {
     locked: boolean,
     options?: RequestOptions
   ): Promise<GroupLockedResponse> {
-    const request: GroupLockedRequest = { groupjid: groupJID, locked };
+    const request: GroupLockedRequest = { GroupJID: groupJID, Locked: locked };
     return this.post<GroupLockedResponse>("/group/locked", request, options);
   }
 
@@ -122,7 +125,10 @@ export class GroupModule extends BaseClient {
     duration: "24h" | "7d" | "90d" | "off",
     options?: RequestOptions
   ): Promise<GroupEphemeralResponse> {
-    const request: GroupEphemeralRequest = { groupjid: groupJID, duration };
+    const request: GroupEphemeralRequest = {
+      GroupJID: groupJID,
+      Duration: duration,
+    };
     return this.post<GroupEphemeralResponse>(
       "/group/ephemeral",
       request,
@@ -137,7 +143,7 @@ export class GroupModule extends BaseClient {
     groupJID: string,
     options?: RequestOptions
   ): Promise<GroupPhotoRemoveResponse> {
-    const request: GroupPhotoRemoveRequest = { groupjid: groupJID };
+    const request: GroupPhotoRemoveRequest = { GroupJID: groupJID };
     return this.post<GroupPhotoRemoveResponse>(
       "/group/photo/remove",
       request,
@@ -191,10 +197,10 @@ export class GroupModule extends BaseClient {
    * Join a group using invite link
    */
   async join(
-    inviteLink: string,
+    inviteCode: string,
     options?: RequestOptions
   ): Promise<GroupJoinResponse> {
-    const request: GroupJoinRequest = { InviteLink: inviteLink };
+    const request: GroupJoinRequest = { Code: inviteCode };
     return this.post<GroupJoinResponse>("/group/join", request, options);
   }
 
@@ -202,10 +208,10 @@ export class GroupModule extends BaseClient {
    * Get group invite information
    */
   async getInviteInfo(
-    inviteLink: string,
+    inviteCode: string,
     options?: RequestOptions
   ): Promise<GroupInviteInfoResponse> {
-    const request: GroupInviteInfoRequest = { InviteLink: inviteLink };
+    const request: GroupInviteInfoRequest = { Code: inviteCode };
     return this.post<GroupInviteInfoResponse>(
       "/group/inviteinfo",
       request,

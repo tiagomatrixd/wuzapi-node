@@ -100,11 +100,12 @@ export interface ReactRequest {
 
 export interface DownloadMediaRequest {
   Url: string;
+  DirectPath: string;
   MediaKey: string;
   Mimetype: string;
+  FileEncSHA256: string;
   FileSHA256: string;
   FileLength: number;
-  FileEncSHA256?: string;
 }
 
 export interface DownloadMediaResponse {
@@ -139,7 +140,7 @@ export interface SendButtonsRequest {
 
 export interface ListItem {
   Title: string;
-  Description?: string;
+  Desc?: string;
   RowId: string;
 }
 
@@ -150,12 +151,13 @@ export interface ListSection {
 
 export interface SendListRequest {
   Phone: string;
-  Body: string;
-  Footer?: string;
-  Title: string;
   ButtonText: string;
-  Sections: ListSection[];
-  ContextInfo?: SimpleContextInfo;
+  Desc: string;
+  TopText: string;
+  Sections?: ListSection[];
+  List?: ListItem[]; // For compatibility
+  FooterText?: string;
+  Id?: string;
 }
 
 export interface ChatPollOption {
@@ -163,11 +165,10 @@ export interface ChatPollOption {
 }
 
 export interface SendPollRequest {
-  Phone: string;
-  Name: string;
-  Options: ChatPollOption[];
-  SelectableCount?: number;
-  ContextInfo?: SimpleContextInfo;
+  Group: string;
+  Header: string;
+  Options: string[];
+  Id?: string;
 }
 
 export interface EditMessageRequest {

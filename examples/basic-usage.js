@@ -35,7 +35,7 @@ async function basicExample() {
     /*
     console.log("🔧 Configuring proxy...");
     try {
-      await client.session.setProxy("socks5://username:password@proxy-server:1080");
+      await client.session.setProxy("socks5://username:password@proxy-server:1080", true);
       console.log("✅ Proxy configured");
     } catch (proxyError) {
       console.log("⚠️ Proxy configuration failed:", proxyError.message);
@@ -79,11 +79,10 @@ async function basicExample() {
         const phoneNumber = "5491155554444"; // Your phone number with country code
         console.log(`📱 Requesting pairing code for ${phoneNumber}...`);
         
-        // You'll receive verification code via SMS/call
-        const verificationCode = "123456"; // Replace with actual code
-        
-        const pairResult = await client.session.pairPhone(phoneNumber, verificationCode);
+        // This will generate a pairing code that will be sent via SMS/call
+        const pairResult = await client.session.pairPhone(phoneNumber);
         console.log("✅ Pairing result:", pairResult.Details);
+        console.log("📱 Check your phone for verification code and enter it in WhatsApp");
       } catch (pairError) {
         console.error("❌ Phone pairing failed:", pairError.message);
       }
@@ -145,27 +144,26 @@ async function basicExample() {
       });
 
       // List message example
-      await client.chat.sendList({
-        Phone: '5491155554444',
-        Body: 'Select from menu:',
-        Title: 'Menu',
-        ButtonText: 'View Options',
-        Sections: [{
+      await client.chat.sendList(
+        '5491155554444', // Phone
+        'View Options', // Button text
+        'Select from menu:', // Description
+        'Menu', // Top text/title
+        [{ // Sections
           Title: 'Options',
           Rows: [
-            { Title: 'Option A', Description: 'First option', RowId: 'opt_a' },
-            { Title: 'Option B', Description: 'Second option', RowId: 'opt_b' }
+            { Title: 'Option A', Desc: 'First option', RowId: 'opt_a' },
+            { Title: 'Option B', Desc: 'Second option', RowId: 'opt_b' }
           ]
         }]
-      });
+      );
 
-      // Poll example
-      await client.chat.sendPoll({
-        Phone: '5491155554444',
-        Name: 'Favorite color?',
-        Options: [{ Name: 'Red' }, { Name: 'Blue' }, { Name: 'Green' }],
-        SelectableCount: 1
-      });
+      // Poll example (for groups only)
+      await client.chat.sendPoll(
+        '120362023605733675@g.us', // Group JID (replace with actual group)
+        'Favorite color?', // Header
+        ['Red', 'Blue', 'Green'] // Options array
+      );
       */
     }
   } catch (error) {

@@ -62,15 +62,15 @@ export interface GroupNameResponse {
 }
 
 export interface GroupCreateRequest {
-  name: string;
-  participants: string[];
+  Name: string;
+  Participants: string[];
 }
 
 export type GroupCreateResponse = GroupInfo;
 
 export interface GroupLockedRequest {
-  groupjid: string;
-  locked: boolean;
+  GroupJID: string;
+  Locked: boolean;
 }
 
 export interface GroupLockedResponse {
@@ -78,8 +78,8 @@ export interface GroupLockedResponse {
 }
 
 export interface GroupEphemeralRequest {
-  groupjid: string;
-  duration: "24h" | "7d" | "90d" | "off";
+  GroupJID: string;
+  Duration: "24h" | "7d" | "90d" | "off";
 }
 
 export interface GroupEphemeralResponse {
@@ -87,7 +87,7 @@ export interface GroupEphemeralResponse {
 }
 
 export interface GroupPhotoRemoveRequest {
-  groupjid: string;
+  GroupJID: string;
 }
 
 export interface GroupPhotoRemoveResponse {
@@ -121,7 +121,7 @@ export interface GroupAnnounceResponse {
 }
 
 export interface GroupJoinRequest {
-  InviteLink: string;
+  Code: string;
 }
 
 export interface GroupJoinResponse {
@@ -130,7 +130,7 @@ export interface GroupJoinResponse {
 }
 
 export interface GroupInviteInfoRequest {
-  InviteLink: string;
+  Code: string;
 }
 
 export interface GroupInviteInfoResponse {

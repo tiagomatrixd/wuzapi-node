@@ -67,7 +67,5 @@ export interface ContactsResponse {
 }
 
 export interface UserPresenceRequest {
-  Phone: string;
-  State: "available" | "unavailable";
-  LastSeen?: number;
+  Type: "available" | "unavailable";
 }

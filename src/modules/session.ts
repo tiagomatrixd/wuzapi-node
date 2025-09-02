@@ -95,10 +95,9 @@ export class SessionModule extends BaseClient {
    */
   async pairPhone(
     phone: string,
-    code: string,
     options?: RequestOptions
   ): Promise<PairPhoneResponse> {
-    const request: PairPhoneRequest = { Phone: phone, Code: code };
+    const request: PairPhoneRequest = { Phone: phone };
     return this.post<PairPhoneResponse>("/session/pairphone", request, options);
   }
 
@@ -113,10 +112,11 @@ export class SessionModule extends BaseClient {
    * Set proxy configuration
    */
   async setProxy(
-    proxy: string,
+    proxyURL: string,
+    enable: boolean = true,
     options?: RequestOptions
   ): Promise<ProxyResponse> {
-    const request: ProxyRequest = { Proxy: proxy };
+    const request: ProxyRequest = { ProxyURL: proxyURL, Enable: enable };
     return this.post<ProxyResponse>("/session/proxy", request, options);
   }
 }

@@ -16,7 +16,7 @@ export interface WuzapiResponse<T = unknown> {
 }
 
 export interface SimpleContextInfo {
-  StanzaId: string;
+  StanzaID: string;
   Participant: string;
 }
 

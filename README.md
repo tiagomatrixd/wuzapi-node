@@ -4,7 +4,7 @@ A comprehensive TypeScript client library for the [WuzAPI WhatsApp API](https://
 
 ## 🚀 Features
 
-- 🔥 **Full TypeScript Support** - Complete type definitions for all API endpoints  
+- 🔥 **Full TypeScript Support** - Complete type definitions for all API endpoints
 - 🏗️ **Modular Architecture** - Organized by functionality (admin, session, chat, user, group, webhook)
 - 🚀 **Promise-based** - Modern async/await support
 - 🛡️ **Error Handling** - Comprehensive error handling with detailed error types
@@ -52,6 +52,7 @@ await client.chat.sendText({
 ### Login Options
 
 #### Option 1: QR Code (Traditional)
+
 ```typescript
 // Get QR code for scanning
 const qr = await client.session.getQRCode();
@@ -59,17 +60,18 @@ console.log("Scan this QR code:", qr.QRCode);
 ```
 
 #### Option 2: Phone Pairing (New!)
+
 ```typescript
-// Pair using verification code (SMS/Call)
-await client.session.pairPhone("5491155554444", "123456");
+// Pair using phone number (generates verification code)
+await client.session.pairPhone("5491155554444");
 ```
 
 ## 🔧 Configuration
 
 ```typescript
 interface WuzapiConfig {
-  apiUrl: string;     // Your WuzAPI server URL
-  token?: string;     // Authentication token (can be provided per request)
+  apiUrl: string; // Your WuzAPI server URL
+  token?: string; // Authentication token (can be provided per request)
 }
 
 // Global token approach
@@ -117,27 +119,29 @@ await client.chat.sendButtons({
 });
 
 // Send list menu
-await client.chat.sendList({
-  Phone: "5491155554444",
-  Body: "Select from menu:",
-  Title: "Options",
-  ButtonText: "View Menu",
-  Sections: [{
-    Title: "Main Options",
-    Rows: [
-      { Title: "Option 1", Description: "First choice", RowId: "opt1" },
-      { Title: "Option 2", Description: "Second choice", RowId: "opt2" },
-    ],
-  }],
-});
+await client.chat.sendList(
+  "5491155554444", // Phone
+  "View Menu", // Button text
+  "Select from menu:", // Description
+  "Options", // Top text/title
+  [
+    {
+      // Sections
+      Title: "Main Options",
+      Rows: [
+        { Title: "Option 1", Desc: "First choice", RowId: "opt1" },
+        { Title: "Option 2", Desc: "Second choice", RowId: "opt2" },
+      ],
+    },
+  ]
+);
 
-// Send poll
-await client.chat.sendPoll({
-  Phone: "5491155554444",
-  Name: "What's your favorite color?",
-  Options: [{ Name: "Red" }, { Name: "Blue" }, { Name: "Green" }],
-  SelectableCount: 1,
-});
+// Send poll (for groups only)
+await client.chat.sendPoll(
+  "120362023605733675@g.us", // Group JID
+  "What's your favorite color?", // Header
+  ["Red", "Blue", "Green"] // Options array
+);
 ```
 
 ## 👥 Group Management
@@ -153,11 +157,7 @@ const group = await client.group.create("My Group", [
 const info = await client.group.getInfo(group.JID);
 
 // Add participants
-await client.group.updateParticipants(
-  group.JID,
-  "add",
-  ["5491155553936"]
-);
+await client.group.updateParticipants(group.JID, "add", ["5491155553936"]);
 
 // Set group settings
 await client.group.setName(group.JID, "New Group Name");
@@ -178,10 +178,7 @@ const info = await client.user.getInfo(["5491155554444"]);
 const contacts = await client.user.getContacts();
 
 // Send presence status
-await client.user.sendPresence({
-  Phone: "5491155554444",
-  State: "available",
-});
+await client.user.sendPresence("available");
 ```
 
 ## 🔗 Webhook Setup
@@ -202,7 +199,7 @@ await client.webhook.updateWebhook("https://new-server.com/webhook");
 Check out the complete examples in the `examples/` directory:
 
 - **[basic-usage.js](examples/basic-usage.js)** - Getting started, connection, basic operations
-- **[advanced-features.js](examples/advanced-features.js)** - Phone pairing, interactive messages, advanced group management  
+- **[advanced-features.js](examples/advanced-features.js)** - Phone pairing, interactive messages, advanced group management
 - **[chatbot-example.js](examples/chatbot-example.js)** - Complete bot with commands and auto-replies
 - **[webhook-events-example.js](examples/webhook-events-example.js)** - Comprehensive webhook event handling
 
@@ -212,7 +209,7 @@ Check out the complete examples in the `examples/` directory:
 # Basic usage
 node examples/basic-usage.js
 
-# Advanced features  
+# Advanced features
 node examples/advanced-features.js
 
 # Start chatbot
@@ -236,11 +233,11 @@ await client.webhook.setWebhook("https://your-server.com/webhook");
 // In your webhook handler:
 app.post("/webhook", async (req, res) => {
   const { event } = req.body;
-  
+
   if (event?.Message?.conversation) {
     const message = event.Message.conversation;
     const from = event.Info.RemoteJid.replace("@s.whatsapp.net", "");
-    
+
     if (message.toLowerCase().includes("hello")) {
       await client.chat.sendText({
         Phone: from,
@@ -248,7 +245,7 @@ app.post("/webhook", async (req, res) => {
       });
     }
   }
-  
+
   res.json({ success: true });
 });
 ```
@@ -261,6 +258,7 @@ app.post("/webhook", async (req, res) => {
 <summary><strong>📱 Session Module</strong> - Connection and authentication</summary>
 
 ### Connection
+
 ```typescript
 // Connect to WhatsApp
 await client.session.connect({
@@ -279,21 +277,23 @@ await client.session.logout();
 ```
 
 ### Authentication
+
 ```typescript
 // Get QR code for scanning
 const qr = await client.session.getQRCode();
 
-// Pair phone using verification code (alternative to QR)
-await client.session.pairPhone("5491155554444", "123456");
+// Pair phone using phone number (generates verification code)
+await client.session.pairPhone("5491155554444");
 
 // Request message history sync
 await client.session.requestHistory();
 
 // Configure proxy
-await client.session.setProxy("socks5://user:pass@proxy:port");
+await client.session.setProxy("socks5://user:pass@proxy:port", true);
 ```
 
 ### S3 Storage
+
 ```typescript
 // Configure S3 storage
 await client.session.configureS3({
@@ -324,6 +324,7 @@ await client.session.deleteS3Config();
 <summary><strong>💬 Chat Module</strong> - Send and manage messages</summary>
 
 ### Basic Messages
+
 ```typescript
 // Send text message
 await client.chat.sendText({
@@ -344,6 +345,7 @@ await client.chat.sendText({
 ```
 
 ### Media Messages
+
 ```typescript
 // Send image
 await client.chat.sendImage({
@@ -380,6 +382,7 @@ await client.chat.sendSticker({
 ```
 
 ### Interactive Messages
+
 ```typescript
 // Send buttons
 await client.chat.sendButtons({
@@ -393,32 +396,33 @@ await client.chat.sendButtons({
 });
 
 // Send list message
-await client.chat.sendList({
-  Phone: "5491155554444",
-  Body: "Please select from the menu:",
-  Title: "Menu Options",
-  ButtonText: "View Menu",
-  Sections: [
+await client.chat.sendList(
+  "5491155554444", // Phone
+  "View Menu", // Button text
+  "Please select from the menu:", // Description
+  "Menu Options", // Top text/title
+  [
     {
+      // Sections
       Title: "Main Course",
       Rows: [
-        { Title: "Pizza", Description: "Delicious pizza", RowId: "pizza" },
-        { Title: "Burger", Description: "Tasty burger", RowId: "burger" },
+        { Title: "Pizza", Desc: "Delicious pizza", RowId: "pizza" },
+        { Title: "Burger", Desc: "Tasty burger", RowId: "burger" },
       ],
     },
-  ],
-});
+  ]
+);
 
-// Send poll
-await client.chat.sendPoll({
-  Phone: "5491155554444",
-  Name: "What's your favorite color?",
-  Options: [{ Name: "Red" }, { Name: "Blue" }, { Name: "Green" }],
-  SelectableCount: 1,
-});
+// Send poll (for groups only)
+await client.chat.sendPoll(
+  "120362023605733675@g.us", // Group JID
+  "What's your favorite color?", // Header
+  ["Red", "Blue", "Green"] // Options array
+);
 ```
 
 ### Message Management
+
 ```typescript
 // Delete a message
 await client.chat.deleteMessage({
@@ -456,6 +460,7 @@ await client.chat.sendPresence({
 ```
 
 ### Location and Contacts
+
 ```typescript
 // Send location
 await client.chat.sendLocation({
@@ -469,11 +474,13 @@ await client.chat.sendLocation({
 await client.chat.sendContact({
   Phone: "5491155554444",
   Name: "John Doe",
-  Vcard: "BEGIN:VCARD\nVERSION:3.0\nN:Doe;John;;;\nFN:John Doe\nTEL:+1234567890\nEND:VCARD",
+  Vcard:
+    "BEGIN:VCARD\nVERSION:3.0\nN:Doe;John;;;\nFN:John Doe\nTEL:+1234567890\nEND:VCARD",
 });
 ```
 
 ### Media Download
+
 ```typescript
 // Download media
 const media = await client.chat.downloadImage({
@@ -504,11 +511,7 @@ const avatar = await client.user.getAvatar("5491155554444", true); // true for p
 const contacts = await client.user.getContacts();
 
 // Send user presence (online/offline status)
-await client.user.sendPresence({
-  Phone: "5491155554444",
-  State: "available", // or "unavailable"
-  LastSeen: Date.now(),
-});
+await client.user.sendPresence("available"); // or "unavailable"
 ```
 
 </details>
@@ -517,6 +520,7 @@ await client.user.sendPresence({
 <summary><strong>👥 Group Module</strong> - Group management</summary>
 
 ### Basic Group Operations
+
 ```typescript
 // List all groups
 const groups = await client.group.list();
@@ -535,6 +539,7 @@ await client.group.leave("120362023605733675@g.us");
 ```
 
 ### Group Settings
+
 ```typescript
 // Set group name
 await client.group.setName("120362023605733675@g.us", "New Group Name");
@@ -556,6 +561,7 @@ await client.group.setEphemeral("120362023605733675@g.us", "24h"); // '24h', '7d
 ```
 
 ### Group Media
+
 ```typescript
 // Set group photo (JPEG only)
 await client.group.setPhoto(
@@ -568,15 +574,20 @@ await client.group.removePhoto("120362023605733675@g.us");
 ```
 
 ### Invites and Participants
+
 ```typescript
 // Get invite link
 const invite = await client.group.getInviteLink("120362023605733675@g.us");
 
 // Join a group using invite link
-const joinResult = await client.group.join("https://chat.whatsapp.com/XXXXXXXXX");
+const joinResult = await client.group.join(
+  "https://chat.whatsapp.com/XXXXXXXXX"
+);
 
 // Get group invite information
-const inviteInfo = await client.group.getInviteInfo("https://chat.whatsapp.com/XXXXXXXXX");
+const inviteInfo = await client.group.getInviteInfo(
+  "https://chat.whatsapp.com/XXXXXXXXX"
+);
 
 // Update group participants (add, remove, promote, demote)
 await client.group.updateParticipants(
@@ -599,27 +610,30 @@ const users = await client.admin.listUsers({ token: "admin-token" });
 const user = await client.admin.getUser(2, { token: "admin-token" });
 
 // Add new user
-const newUser = await client.admin.addUser({
-  name: "John Doe",
-  token: "user-token-123",
-  webhook: "https://example.com/webhook",
-  events: "Message,ReadReceipt",
-  proxyConfig: {
-    enabled: true,
-    proxyURL: "socks5://user:pass@proxy:port",
+const newUser = await client.admin.addUser(
+  {
+    name: "John Doe",
+    token: "user-token-123",
+    webhook: "https://example.com/webhook",
+    events: "Message,ReadReceipt",
+    proxyConfig: {
+      enabled: true,
+      proxyURL: "socks5://user:pass@proxy:port",
+    },
+    s3Config: {
+      enabled: true,
+      endpoint: "https://s3.amazonaws.com",
+      region: "us-east-1",
+      bucket: "user-media-bucket",
+      accessKey: "AKIA...",
+      secretKey: "secret...",
+      pathStyle: false,
+      mediaDelivery: "both",
+      retentionDays: 30,
+    },
   },
-  s3Config: {
-    enabled: true,
-    endpoint: "https://s3.amazonaws.com",
-    region: "us-east-1",
-    bucket: "user-media-bucket",
-    accessKey: "AKIA...",
-    secretKey: "secret...",
-    pathStyle: false,
-    mediaDelivery: "both",
-    retentionDays: 30,
-  },
-}, { token: "admin-token" });
+  { token: "admin-token" }
+);
 
 // Delete user
 await client.admin.deleteUser(2, { token: "admin-token" });
@@ -691,22 +705,22 @@ const client = new WuzapiClient({
 app.post("/webhook", async (req, res) => {
   try {
     const webhookPayload = req.body;
-    
+
     // Handle S3 media if present
     if (hasS3Media(webhookPayload)) {
       console.log("S3 Media:", webhookPayload.s3.url);
     }
-    
+
     const event = webhookPayload.event || webhookPayload;
-    
+
     // Handle messages
     if (event.Message && event.Info) {
       const messageContent = getMessageContent(event.Message);
       const from = event.Info.RemoteJid.replace("@s.whatsapp.net", "");
-      
+
       if (messageContent?.type === "text") {
         console.log(`Message from ${from}: ${messageContent.content}`);
-        
+
         // Auto-reply
         if (messageContent.content.toLowerCase().includes("hello")) {
           await client.chat.sendText({
@@ -716,7 +730,7 @@ app.post("/webhook", async (req, res) => {
         }
       }
     }
-    
+
     res.json({ success: true });
   } catch (error) {
     console.error("Webhook error:", error);
@@ -743,7 +757,10 @@ switch (messageContent?.type) {
     console.log("Button clicked:", messageContent.content.selectedButtonId);
     break;
   case "listResponse":
-    console.log("List selection:", messageContent.content.singleSelectReply?.selectedRowId);
+    console.log(
+      "List selection:",
+      messageContent.content.singleSelectReply?.selectedRowId
+    );
     break;
   // ... handle other types
 }
@@ -778,8 +795,9 @@ try {
 ```
 
 ### Common Error Codes
+
 - **401**: Authentication required
-- **404**: Endpoint not found  
+- **404**: Endpoint not found
 - **500**: Server error
 
 </details>
@@ -794,7 +812,7 @@ import { BaseClient } from "wuzapi";
 class CustomClient extends BaseClient {
   constructor(config) {
     super(config);
-    
+
     // Add custom interceptors
     this.axios.interceptors.request.use((config) => {
       console.log("Making request:", config.url);

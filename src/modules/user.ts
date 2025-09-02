@@ -57,9 +57,10 @@ export class UserModule extends BaseClient {
    * Send user presence (available/unavailable status)
    */
   async sendPresence(
-    request: UserPresenceRequest,
+    presenceType: "available" | "unavailable",
     options?: RequestOptions
   ): Promise<void> {
+    const request: UserPresenceRequest = { Type: presenceType };
     await this.post<void>("/user/presence", request, options);
   }
 }

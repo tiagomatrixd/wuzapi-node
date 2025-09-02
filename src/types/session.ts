@@ -43,7 +43,6 @@ export interface S3TestResponse {
 
 export interface PairPhoneRequest {
   Phone: string;
-  Code: string;
 }
 
 export interface PairPhoneResponse {
@@ -55,7 +54,8 @@ export interface HistoryResponse {
 }
 
 export interface ProxyRequest {
-  Proxy: string;
+  ProxyURL: string;
+  Enable: boolean;
 }
 
 export interface ProxyResponse {
