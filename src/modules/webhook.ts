@@ -7,6 +7,9 @@ import {
   UpdateWebhookRequest,
   UpdateWebhookResponse,
   DeleteWebhookResponse,
+  WebhookEventType,
+  WebhookEvent,
+  WEBHOOK_EVENTS,
 } from "../types/webhook.js";
 
 export class WebhookModule extends BaseClient {
@@ -15,7 +18,7 @@ export class WebhookModule extends BaseClient {
    */
   async setWebhook(
     webhookURL: string,
-    events: string[] = ["All"],
+    events: (WebhookEvent | string)[] = ["All"],
     options?: RequestOptions
   ): Promise<SetWebhookResponse> {
     const request: SetWebhookRequest = { webhook: webhookURL, events };
@@ -34,7 +37,7 @@ export class WebhookModule extends BaseClient {
    */
   async updateWebhook(
     webhookURL?: string,
-    events?: string[],
+    events?: (WebhookEvent | string)[],
     active?: boolean,
     options?: RequestOptions
   ): Promise<UpdateWebhookResponse> {
@@ -53,5 +56,19 @@ export class WebhookModule extends BaseClient {
     options?: RequestOptions
   ): Promise<DeleteWebhookResponse> {
     return this.delete<DeleteWebhookResponse>("/webhook", options);
+  }
+
+  /**
+   * Get all available webhook event types
+   */
+  static getAvailableEvents(): string[] {
+    return WEBHOOK_EVENTS;
+  }
+
+  /**
+   * Get webhook event types enum for type-safe access
+   */
+  static get EventTypes(): typeof WebhookEventType {
+    return WebhookEventType;
   }
 }

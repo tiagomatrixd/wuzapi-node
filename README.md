@@ -239,18 +239,37 @@ await client.webhook.setWebhook("https://your-server.com/webhook", ["Message"]);
 
 // In your webhook handler:
 app.post("/webhook", async (req, res) => {
-  const { event } = req.body;
+  const webhookPayload = req.body;
 
-  if (event?.Message?.conversation) {
-    const message = event.Message.conversation;
-    const from = event.Info.RemoteJid.replace("@s.whatsapp.net", "");
+  // Validate payload structure
+  if (webhookPayload.token !== "your-expected-token") {
+    return res.status(401).json({ error: "Invalid token" });
+  }
 
-    if (message.toLowerCase().includes("hello")) {
-      await client.chat.sendText({
-        Phone: from,
-        Body: "Hello! 👋 How can I help you?",
-      });
-    }
+  // Handle by event type
+  switch (webhookPayload.type) {
+    case "Message":
+      const { event } = webhookPayload;
+      if (event.Message?.conversation) {
+        const message = event.Message.conversation;
+        const from = event.Info.RemoteJid.replace("@s.whatsapp.net", "");
+
+        if (message.toLowerCase().includes("hello")) {
+          await client.chat.sendText({
+            Phone: from,
+            Body: "Hello! 👋 How can I help you?",
+          });
+        }
+      }
+      break;
+
+    case "Connected":
+      console.log("✅ WhatsApp connected");
+      break;
+
+    case "QR":
+      console.log("📱 QR Code:", webhookPayload.event.Codes);
+      break;
   }
 
   res.json({ success: true });
@@ -653,7 +672,9 @@ await client.admin.deleteUserComplete("user-id-string", {
 // Set webhook URL with specific events
 await client.webhook.setWebhook("https://my-server.com/webhook", [
   "Message",
-  "ReadReceipt",
+  "Receipt",
+  "Connected",
+  "Disconnected",
 ]);
 
 // Get current webhook configuration
@@ -664,12 +685,186 @@ console.log("Subscribed events:", webhookConfig.subscribe);
 // Update webhook URL, events, and status
 await client.webhook.updateWebhook(
   "https://my-new-server.com/webhook",
-  ["Message", "ReadReceipt", "Presence"],
+  ["Message", "Receipt", "Presence"],
   true
 );
 
 // Delete webhook configuration
 await client.webhook.deleteWebhook();
+
+// Get all available events
+const availableEvents = client.webhook.constructor.getAvailableEvents();
+console.log("Available events:", availableEvents);
+
+// Use the enum for type safety (TypeScript)
+import { WebhookEventType } from "wuzapi";
+await client.webhook.setWebhook("https://my-server.com/webhook", [
+  WebhookEventType.MESSAGE,
+  WebhookEventType.RECEIPT,
+  WebhookEventType.CONNECTED,
+]);
+```
+
+### 📋 Complete Webhook Events List
+
+WuzAPI supports **45 different webhook events**. Here's the complete list:
+
+#### 🔧 **Connection & Session Events**
+
+```typescript
+WebhookEventType.CONNECTED; // "Connected"
+WebhookEventType.DISCONNECTED; // "Disconnected"
+WebhookEventType.CONNECT_FAILURE; // "ConnectFailure"
+WebhookEventType.LOGGED_OUT; // "LoggedOut"
+WebhookEventType.KEEP_ALIVE_RESTORED; // "KeepAliveRestored"
+WebhookEventType.KEEP_ALIVE_TIMEOUT; // "KeepAliveTimeout"
+WebhookEventType.CLIENT_OUTDATED; // "ClientOutdated"
+WebhookEventType.TEMPORARY_BAN; // "TemporaryBan"
+WebhookEventType.STREAM_ERROR; // "StreamError"
+WebhookEventType.STREAM_REPLACED; // "StreamReplaced"
+```
+
+#### 🔐 **Authentication Events**
+
+```typescript
+WebhookEventType.QR; // "QR"
+WebhookEventType.QR_SCANNED_WITHOUT_MULTIDEVICE; // "QRScannedWithoutMultidevice"
+WebhookEventType.PAIR_SUCCESS; // "PairSuccess"
+WebhookEventType.PAIR_ERROR; // "PairError"
+```
+
+#### 💬 **Message Events**
+
+```typescript
+WebhookEventType.MESSAGE; // "Message"
+WebhookEventType.UNDECRYPTABLE_MESSAGE; // "UndecryptableMessage"
+WebhookEventType.RECEIPT; // "Receipt"
+WebhookEventType.MEDIA_RETRY; // "MediaRetry"
+```
+
+#### 👥 **Group Events**
+
+```typescript
+WebhookEventType.GROUP_INFO; // "GroupInfo"
+WebhookEventType.JOINED_GROUP; // "JoinedGroup"
+```
+
+#### 👤 **User & Contact Events**
+
+```typescript
+WebhookEventType.PICTURE; // "Picture"
+WebhookEventType.USER_ABOUT; // "UserAbout"
+WebhookEventType.PUSH_NAME_SETTING; // "PushNameSetting"
+WebhookEventType.PRIVACY_SETTINGS; // "PrivacySettings"
+WebhookEventType.PRESENCE; // "Presence"
+WebhookEventType.CHAT_PRESENCE; // "ChatPresence"
+WebhookEventType.IDENTITY_CHANGE; // "IdentityChange"
+```
+
+#### 🚫 **Blocklist Events**
+
+```typescript
+WebhookEventType.BLOCKLIST; // "Blocklist"
+WebhookEventType.BLOCKLIST_CHANGE; // "BlocklistChange"
+```
+
+#### 📱 **App State & Sync Events**
+
+```typescript
+WebhookEventType.APP_STATE; // "AppState"
+WebhookEventType.APP_STATE_SYNC_COMPLETE; // "AppStateSyncComplete"
+WebhookEventType.HISTORY_SYNC; // "HistorySync"
+WebhookEventType.OFFLINE_SYNC_COMPLETED; // "OfflineSyncCompleted"
+WebhookEventType.OFFLINE_SYNC_PREVIEW; // "OfflineSyncPreview"
+```
+
+#### 📞 **Call Events**
+
+```typescript
+WebhookEventType.CALL_OFFER; // "CallOffer"
+WebhookEventType.CALL_ACCEPT; // "CallAccept"
+WebhookEventType.CALL_TERMINATE; // "CallTerminate"
+WebhookEventType.CALL_OFFER_NOTICE; // "CallOfferNotice"
+WebhookEventType.CALL_RELAY_LATENCY; // "CallRelayLatency"
+```
+
+#### 📰 **Newsletter Events**
+
+```typescript
+WebhookEventType.NEWSLETTER_JOIN; // "NewsletterJoin"
+WebhookEventType.NEWSLETTER_LEAVE; // "NewsletterLeave"
+WebhookEventType.NEWSLETTER_MUTE_CHANGE; // "NewsletterMuteChange"
+WebhookEventType.NEWSLETTER_LIVE_UPDATE; // "NewsletterLiveUpdate"
+```
+
+#### 🔧 **System Events**
+
+```typescript
+WebhookEventType.CAT_REFRESH_ERROR; // "CATRefreshError"
+WebhookEventType.FB_MESSAGE; // "FBMessage"
+```
+
+### 📦 **Webhook Payload Structure**
+
+All webhook payloads follow this structure:
+
+```typescript
+{
+  "event": { /* Event-specific data */ },
+  "type": "Message",  // Event type from the list above
+  "token": "YOUR_TOKEN",  // Your authentication token
+
+  // Optional media fields (when media is involved)
+  "s3": {
+    "url": "https://bucket.s3.amazonaws.com/media/file.jpg",
+    "key": "media/file.jpg",
+    "bucket": "your-bucket",
+    "size": 1024000,
+    "mimeType": "image/jpeg",
+    "fileName": "file.jpg"
+  },
+  "base64": "data:image/jpeg;base64,/9j/4AAQ...",
+  "mimeType": "image/jpeg",
+  "fileName": "image.jpg"
+}
+```
+
+### 🎯 **Event Subscription Examples**
+
+```typescript
+// Subscribe to all message-related events
+await client.webhook.setWebhook("https://your-server.com/webhook", [
+  "Message",
+  "UndecryptableMessage",
+  "Receipt",
+  "MediaRetry",
+]);
+
+// Subscribe to connection events only
+await client.webhook.setWebhook("https://your-server.com/webhook", [
+  "Connected",
+  "Disconnected",
+  "LoggedOut",
+  "QR",
+]);
+
+// Subscribe to group events
+await client.webhook.setWebhook("https://your-server.com/webhook", [
+  "GroupInfo",
+  "JoinedGroup",
+]);
+
+// Subscribe to all events
+await client.webhook.setWebhook("https://your-server.com/webhook", ["All"]);
+
+// TypeScript: Use enum for type safety
+import { WebhookEventType } from "wuzapi";
+await client.webhook.setWebhook("https://your-server.com/webhook", [
+  WebhookEventType.MESSAGE,
+  WebhookEventType.RECEIPT,
+  WebhookEventType.CONNECTED,
+  WebhookEventType.QR,
+]);
 ```
 
 </details>
@@ -715,29 +910,83 @@ app.post("/webhook", async (req, res) => {
   try {
     const webhookPayload = req.body;
 
+    // Validate payload structure with token and type
+    if (
+      !webhookPayload.token ||
+      !webhookPayload.type ||
+      !webhookPayload.event
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Invalid webhook payload structure" });
+    }
+
+    // Verify token (optional security check)
+    if (webhookPayload.token !== "your-expected-token") {
+      return res.status(401).json({ error: "Invalid webhook token" });
+    }
+
+    console.log(`Received webhook event: ${webhookPayload.type}`);
+
     // Handle S3 media if present
     if (hasS3Media(webhookPayload)) {
       console.log("S3 Media:", webhookPayload.s3.url);
     }
 
-    const event = webhookPayload.event || webhookPayload;
+    const event = webhookPayload.event;
 
-    // Handle messages
-    if (event.Message && event.Info) {
-      const messageContent = getMessageContent(event.Message);
-      const from = event.Info.RemoteJid.replace("@s.whatsapp.net", "");
+    // Handle different event types
+    switch (webhookPayload.type) {
+      case "Message":
+        if (event.Message && event.Info) {
+          const messageContent = getMessageContent(event.Message);
+          const from = event.Info.RemoteJid.replace("@s.whatsapp.net", "");
 
-      if (messageContent?.type === "text") {
-        console.log(`Message from ${from}: ${messageContent.content}`);
+          if (messageContent?.type === "text") {
+            console.log(`Message from ${from}: ${messageContent.content}`);
 
-        // Auto-reply
-        if (messageContent.content.toLowerCase().includes("hello")) {
-          await client.chat.sendText({
-            Phone: from,
-            Body: "Hello! 👋 How can I help you?",
-          });
+            // Auto-reply
+            if (messageContent.content.toLowerCase().includes("hello")) {
+              await client.chat.sendText({
+                Phone: from,
+                Body: "Hello! 👋 How can I help you?",
+              });
+            }
+          }
         }
-      }
+        break;
+
+      case "Receipt":
+        console.log("Message receipt:", event.Type, event.MessageIDs);
+        break;
+
+      case "Connected":
+        console.log("✅ WhatsApp connected successfully");
+        break;
+
+      case "Disconnected":
+        console.log("❌ WhatsApp disconnected");
+        break;
+
+      case "QR":
+        console.log("📱 QR Code received:", event.Codes);
+        break;
+
+      case "GroupInfo":
+        console.log("👥 Group info updated:", event.GroupName);
+        break;
+
+      case "Presence":
+        console.log(
+          "👤 User presence:",
+          event.From,
+          event.Unavailable ? "offline" : "online"
+        );
+        break;
+
+      // Handle all other webhook events
+      default:
+        console.log(`Unhandled event type: ${webhookPayload.type}`, event);
     }
 
     res.json({ success: true });
