@@ -912,6 +912,10 @@ import WuzapiClient, {
 const messageType = discoverMessageType(webhookPayload.event.Message);
 
 switch (messageType) {
+  case MessageType.TEXT:
+    console.log("Text:", webhookPayload.event.Message.conversation);
+    break;
+
   case MessageType.EXTENDED_TEXT:
     console.log("Text:", webhookPayload.event.Message.extendedTextMessage.text);
     break;
@@ -968,7 +972,8 @@ if (hasS3Media(webhookPayload)) {
 
 ```typescript
 enum MessageType {
-  EXTENDED_TEXT = "extendedTextMessage", // Text messages
+  TEXT = "conversation", // Simple text messages
+  EXTENDED_TEXT = "extendedTextMessage", // Rich text messages
   IMAGE = "imageMessage", // Photos, screenshots
   VIDEO = "videoMessage", // Video files
   AUDIO = "audioMessage", // Audio files, voice messages

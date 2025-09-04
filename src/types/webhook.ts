@@ -1,3 +1,6 @@
+// Import types that are identical from other modules
+import type { VerifiedName } from "./user.js";
+
 // Webhook endpoints types
 
 // Webhook event types (events that can be subscribed to via webhooks)
@@ -155,30 +158,30 @@ export type AnyWebhookPayload<T = unknown> =
 // structured JID objects and Date objects.
 
 // Common context info structures
-export interface MessageContextInfo {
-  deviceListMetadata?: DeviceListMetadata;
+export interface WebhookMessageContextInfo {
+  deviceListMetadata?: WebhookDeviceListMetadata;
   deviceListMetadataVersion?: number;
-  messageSecret?: string; // Encryption secret
+  messageSecret?: string; // Encryption secret (string format for webhook)
   limitSharingV2?: {
     initiatedByMe: boolean;
     trigger: number;
   };
 }
 
-export interface DeviceListMetadata {
-  senderKeyHash?: string;
+export interface WebhookDeviceListMetadata {
+  senderKeyHash?: string; // Base64 string format for webhook (vs Uint8Array in message.ts)
   senderTimestamp?: number;
-  recipientKeyHash?: string;
+  recipientKeyHash?: string; // Base64 string format for webhook
   recipientTimestamp?: number;
-  senderAccountType?: number;
-  receiverAccountType?: number;
+  senderAccountType?: number; // Webhook-specific field
+  receiverAccountType?: number; // Webhook-specific field
 }
 
-export interface ContextInfo {
+export interface WebhookContextInfo {
   disappearingMode?: {
     initiator: number;
-    initiatedByMe?: boolean;
-    trigger?: number;
+    initiatedByMe?: boolean; // Webhook-specific field
+    trigger?: number; // Webhook-specific field
   };
   ephemeralSettingTimestamp?: number;
   expiration?: number;
@@ -192,98 +195,98 @@ export interface ContextInfo {
 }
 
 // Common message types that are reused across different webhook events
-export interface ExtendedTextMessage {
+export interface WebhookExtendedTextMessage {
   text: string;
-  contextInfo?: ContextInfo;
-  inviteLinkGroupTypeV2?: number;
-  previewType?: number;
+  contextInfo?: WebhookContextInfo;
+  inviteLinkGroupTypeV2?: number; // Webhook-specific field
+  previewType?: number; // Webhook-specific field
 }
 
-export interface ImageMessage {
-  URL: string; // Full WhatsApp media URL
+export interface WebhookImageMessage {
+  URL: string; // Full WhatsApp media URL (uppercase for webhook)
   JPEGThumbnail?: string; // Base64 encoded JPEG thumbnail
-  contextInfo?: ContextInfo;
+  contextInfo?: WebhookContextInfo;
   directPath: string; // Direct path to media
-  fileEncSHA256: string; // Encrypted file SHA256 hash
+  fileEncSHA256: string; // Encrypted file SHA256 hash (string format for webhook)
   fileLength: number; // File size in bytes
-  fileSHA256: string; // File SHA256 hash
+  fileSHA256: string; // File SHA256 hash (string format for webhook)
   height: number;
-  imageSourceType: number;
-  mediaKey: string; // Media encryption key
+  imageSourceType: number; // Webhook-specific field
+  mediaKey: string; // Media encryption key (string format for webhook)
   mediaKeyTimestamp: number; // Unix timestamp
-  midQualityFileSHA256: string; // Mid quality file hash
+  midQualityFileSHA256: string; // Mid quality file hash (webhook-specific)
   mimetype: string; // MIME type (e.g., "image/jpeg")
-  scanLengths: number[]; // Progressive scan lengths
-  scansSidecar: string; // Progressive scan sidecar data
-  firstScanLength?: number; // First scan length
-  firstScanSidecar?: string; // First scan sidecar
+  scanLengths: number[]; // Progressive scan lengths (webhook-specific)
+  scansSidecar: string; // Progressive scan sidecar data (webhook-specific)
+  firstScanLength?: number; // First scan length (webhook-specific)
+  firstScanSidecar?: string; // First scan sidecar (webhook-specific)
   width: number;
 }
 
-export interface VideoMessage {
-  URL: string; // Full WhatsApp media URL
+export interface WebhookVideoMessage {
+  URL: string; // Full WhatsApp media URL (uppercase for webhook)
   JPEGThumbnail?: string; // Base64 encoded JPEG thumbnail
   accessibilityLabel?: string;
   caption?: string;
-  contextInfo?: ContextInfo;
+  contextInfo?: WebhookContextInfo;
   directPath: string; // Direct path to media
-  externalShareFullVideoDurationInSeconds?: number;
-  fileEncSHA256: string; // Encrypted file SHA256 hash
+  externalShareFullVideoDurationInSeconds?: number; // Webhook-specific field
+  fileEncSHA256: string; // Encrypted file SHA256 hash (string format for webhook)
   fileLength: number; // File size in bytes
-  fileSHA256: string; // File SHA256 hash
+  fileSHA256: string; // File SHA256 hash (string format for webhook)
   height: number;
-  mediaKey: string; // Media encryption key
+  mediaKey: string; // Media encryption key (string format for webhook)
   mediaKeyTimestamp: number; // Unix timestamp
   mimetype: string; // MIME type (e.g., "video/mp4")
   seconds: number; // Video duration in seconds
   streamingSidecar?: string; // Streaming sidecar data for video streaming
-  thumbnailDirectPath?: string; // Thumbnail direct path (alternative to JPEGThumbnail)
-  thumbnailEncSHA256?: string; // Thumbnail encrypted SHA256
-  thumbnailSHA256?: string; // Thumbnail SHA256
-  videoSourceType: number;
+  thumbnailDirectPath?: string; // Thumbnail direct path (webhook-specific)
+  thumbnailEncSHA256?: string; // Thumbnail encrypted SHA256 (webhook-specific)
+  thumbnailSHA256?: string; // Thumbnail SHA256 (webhook-specific)
+  videoSourceType: number; // Webhook-specific field
   width: number;
 }
 
-export interface AudioMessage {
-  URL?: string;
-  contextInfo?: ContextInfo;
+export interface WebhookAudioMessage {
+  URL?: string; // Uppercase for webhook
+  contextInfo?: WebhookContextInfo;
   directPath?: string;
-  fileEncSHA256?: string;
+  fileEncSHA256?: string; // String format for webhook
   fileLength?: number;
-  fileSHA256?: string;
-  mediaKey?: string;
+  fileSHA256?: string; // String format for webhook
+  mediaKey?: string; // String format for webhook
   mediaKeyTimestamp?: number;
   mimetype?: string;
   seconds?: number;
   ptt?: boolean; // Push to talk (voice message) - Note: payload uses uppercase "PTT"
-  streamingSidecar?: string; // Streaming sidecar data for audio streaming
-  waveform?: string; // Base64 encoded waveform for voice messages
+  streamingSidecar?: string; // Streaming sidecar data for audio streaming (webhook-specific)
+  waveform?: string; // Base64 encoded waveform for voice messages (webhook-specific)
 }
 
-export interface DocumentMessage {
-  URL: string; // Full WhatsApp media URL
-  contactVcard: boolean; // Whether this is a contact vCard
-  contextInfo?: ContextInfo;
+export interface WebhookDocumentMessage {
+  URL: string; // Full WhatsApp media URL (uppercase for webhook)
+  contactVcard: boolean; // Whether this is a contact vCard (webhook-specific field)
+  contextInfo?: WebhookContextInfo;
   directPath: string; // Direct path to media
-  fileEncSHA256: string; // Encrypted file SHA256 hash
+  fileEncSHA256: string; // Encrypted file SHA256 hash (string format for webhook)
   fileLength: number; // File size in bytes
   fileName: string; // Original file name
-  fileSHA256: string; // File SHA256 hash
-  mediaKey: string; // Media encryption key
+  fileSHA256: string; // File SHA256 hash (string format for webhook)
+  mediaKey: string; // Media encryption key (string format for webhook)
   mediaKeyTimestamp: number; // Unix timestamp
   mimetype: string; // MIME type (e.g., "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/pdf")
-  pageCount?: number; // Number of pages in the document (for documents like PDFs, Word docs, etc.)
+  pageCount?: number; // Number of pages in the document (webhook-specific field)
   title: string; // Document title (usually filename without extension)
 }
 
-export interface ContactMessage {
-  contextInfo?: ContextInfo;
+export interface WebhookContactMessage {
+  contextInfo?: WebhookContextInfo;
   displayName: string; // Display name of the contact
   vcard: string; // vCard data in standard vCard format
 }
 
-export interface PollCreationMessageV3 {
-  contextInfo?: ContextInfo;
+export interface WebhookPollCreationMessageV3 {
+  contextInfo?: WebhookContextInfo;
   name: string; // Poll question/title
   options: Array<{
     optionHash: string; // Hash for the option
@@ -293,25 +296,25 @@ export interface PollCreationMessageV3 {
   selectableOptionsCount: number; // Number of options that can be selected (0 = single choice, >0 = multiple choice)
 }
 
-export interface LocationMessage {
-  JPEGThumbnail?: string; // Base64 encoded JPEG thumbnail of the location (map image)
-  contextInfo?: ContextInfo;
+export interface WebhookLocationMessage {
+  JPEGThumbnail?: string; // Base64 encoded JPEG thumbnail of the location (webhook-specific field)
+  contextInfo?: WebhookContextInfo;
   degreesLatitude: number; // Latitude coordinate
   degreesLongitude: number; // Longitude coordinate
 }
 
-export interface EditedMessage {
+export interface WebhookEditedMessage {
   message?: unknown; // The edited message content
   timestampMS?: string; // Edit timestamp
   editedMessageID?: string; // ID of original message being edited
 }
 
 // Message key structure
-export interface MessageKey {
-  ID: string;
-  fromMe: boolean;
+export interface WebhookMessageKey {
+  ID: string; // Uppercase field name for webhook (vs lowercase 'id' in message.ts)
+  fromMe: boolean; // Required in webhook (vs optional in message.ts)
   participant?: string; // JID in string format
-  remoteJID: string; // JID in string format
+  remoteJID: string; // Uppercase JID field name for webhook (vs 'remoteJid' in message.ts)
 }
 
 // User receipt structure
@@ -323,39 +326,41 @@ export interface UserReceipt {
 }
 
 // Reaction structure
-export interface Reaction {
-  key?: MessageKey;
+export interface WebhookReaction {
+  key?: WebhookMessageKey;
   text?: string;
   senderTimestampMS?: number;
 }
 
-// Generic message wrapper
-export interface GenericMessage {
-  messageContextInfo?: MessageContextInfo;
-  extendedTextMessage?: ExtendedTextMessage;
-  imageMessage?: ImageMessage;
-  videoMessage?: VideoMessage;
-  audioMessage?: AudioMessage;
-  editedMessage?: EditedMessage;
-  documentMessage?: DocumentMessage;
-  contactMessage?: ContactMessage;
-  pollCreationMessageV3?: PollCreationMessageV3;
-  locationMessage?: LocationMessage;
+// Generic message wrapper for webhook payloads
+export interface WebhookGenericMessage {
+  messageContextInfo?: WebhookMessageContextInfo;
+  conversation?: string; // Simple text message
+  extendedTextMessage?: WebhookExtendedTextMessage;
+  imageMessage?: WebhookImageMessage;
+  videoMessage?: WebhookVideoMessage;
+  audioMessage?: WebhookAudioMessage;
+  documentMessage?: WebhookDocumentMessage;
+  contactMessage?: WebhookContactMessage;
+  pollCreationMessageV3?: WebhookPollCreationMessageV3;
+  locationMessage?: WebhookLocationMessage;
+  editedMessage?: WebhookEditedMessage;
   protocolMessage?: {
     type?: number;
-    historySyncNotification?: HistorySyncNotification;
+    historySyncNotification?: WebhookHistorySyncNotification;
     initialSecurityNotificationSettingSync?: {
       securityNotificationEnabled: boolean;
     };
   };
   deviceSentMessage?: {
     destinationJID: string;
-    message: GenericMessage;
+    message: WebhookGenericMessage;
   };
 }
 
 // Message types enum for easier handling of different message types
 export enum MessageType {
+  TEXT = "conversation",
   EXTENDED_TEXT = "extendedTextMessage",
   IMAGE = "imageMessage",
   VIDEO = "videoMessage",
@@ -370,30 +375,19 @@ export enum MessageType {
   UNKNOWN = "unknown",
 }
 // History sync notification structure
-export interface HistorySyncNotification {
+export interface WebhookHistorySyncNotification {
   chunkOrder?: number;
   directPath: string;
-  encHandle: string;
-  fileEncSHA256: string;
+  encHandle: string; // Webhook-specific field
+  fileEncSHA256: string; // String format for webhook
   fileLength: number;
-  fileSHA256: string;
-  mediaKey: string;
+  fileSHA256: string; // String format for webhook
+  mediaKey: string; // String format for webhook
   progress?: number;
   syncType: number;
 }
 
-// Verified business name structure
-export interface VerifiedName {
-  Certificate: {
-    details: string; // Base64 encoded certificate details
-    signature: string; // Base64 encoded signature
-  };
-  Details: {
-    issuer: string; // Certificate issuer (e.g., "smb:wa")
-    serial: number; // Certificate serial number
-    verifiedName: string; // The verified business name
-  };
-}
+// Using VerifiedName imported from user.ts (identical interface)
 
 // Specific webhook event data interfaces
 
@@ -459,8 +453,8 @@ export interface HistorySyncWebhookEvent {
 
     // Variant 2: Status messages data (stories/status updates)
     statusV3Messages?: Array<{
-      key: MessageKey;
-      message: GenericMessage;
+      key: WebhookMessageKey;
+      message: WebhookGenericMessage;
       messageTimestamp: number; // Unix timestamp
       participant: string; // JID in string format
       reportingTokenInfo?: {
@@ -473,15 +467,15 @@ export interface HistorySyncWebhookEvent {
       ID: string; // JID in string format (chat identifier)
       messages: Array<{
         message: {
-          key: MessageKey;
-          message: GenericMessage;
+          key: WebhookMessageKey;
+          message: WebhookGenericMessage;
           messageTimestamp: number; // Unix timestamp
           messageC2STimestamp?: number; // Client to server timestamp
           ephemeralStartTimestamp?: number; // Ephemeral message start timestamp
           originalSelfAuthorUserJIDString?: string; // Original author for messages sent by self
           status?: number; // Message status (3=delivered, 4=read, 5=played)
           userReceipt?: UserReceipt[];
-          reactions?: Reaction[];
+          reactions?: WebhookReaction[];
           reportingTokenInfo?: {
             reportingTag: string;
           };
@@ -547,9 +541,9 @@ export interface MessageWebhookEvent {
   IsViewOnce: boolean;
   IsViewOnceV2: boolean;
   IsViewOnceV2Extension: boolean;
-  Message: GenericMessage; // Using shared message structure
+  Message: WebhookGenericMessage; // Using webhook-specific message structure
   NewsletterMeta: unknown | null;
-  RawMessage: GenericMessage; // Using shared message structure
+  RawMessage: WebhookGenericMessage; // Using webhook-specific message structure
   RetryCount: number;
   SourceWebMsg: unknown | null;
   UnavailableRequestID: string;
@@ -653,10 +647,13 @@ export function isValidWebhookPayload(
  * }
  * ```
  */
-export function discoverMessageType(message: GenericMessage): MessageType {
+export function discoverMessageType(
+  message: WebhookGenericMessage
+): MessageType {
   if (!message) return MessageType.UNKNOWN;
 
   // Check for each message type in order of most common to least common
+  if (message.conversation) return MessageType.TEXT;
   if (message.extendedTextMessage) return MessageType.EXTENDED_TEXT;
   if (message.imageMessage) return MessageType.IMAGE;
   if (message.videoMessage) return MessageType.VIDEO;
