@@ -954,6 +954,25 @@ switch (messageType) {
     );
     break;
 
+  case MessageType.STICKER:
+    const stickerMsg = webhookPayload.event.Message.stickerMessage;
+    console.log(
+      "Sticker:",
+      stickerMsg.isAnimated ? "Animated" : "Static",
+      stickerMsg.mimetype
+    );
+    break;
+
+  case MessageType.REACTION:
+    const reactionMsg = webhookPayload.event.Message.reactionMessage;
+    console.log(
+      "Reaction:",
+      reactionMsg.text,
+      "to message",
+      reactionMsg.key.ID
+    );
+    break;
+
   case MessageType.POLL_CREATION:
     const pollMsg = webhookPayload.event.Message.pollCreationMessageV3;
     console.log("Poll:", pollMsg.name, `${pollMsg.options.length} options`);
@@ -975,11 +994,13 @@ enum MessageType {
   TEXT = "conversation", // Simple text messages
   EXTENDED_TEXT = "extendedTextMessage", // Rich text messages
   IMAGE = "imageMessage", // Photos, screenshots
-  VIDEO = "videoMessage", // Video files
+  VIDEO = "videoMessage", // Video files, GIFs
   AUDIO = "audioMessage", // Audio files, voice messages
   DOCUMENT = "documentMessage", // PDFs, Word docs, etc.
   CONTACT = "contactMessage", // Shared contacts
   LOCATION = "locationMessage", // Location pins
+  STICKER = "stickerMessage", // Stickers (animated/static)
+  REACTION = "reactionMessage", // Message reactions (emoji)
   POLL_CREATION = "pollCreationMessageV3", // Polls (groups only)
   EDITED = "editedMessage", // Edited messages
   PROTOCOL = "protocolMessage", // System messages

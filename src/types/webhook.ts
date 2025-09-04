@@ -234,6 +234,8 @@ export interface WebhookVideoMessage {
   fileEncSHA256: string; // Encrypted file SHA256 hash (string format for webhook)
   fileLength: number; // File size in bytes
   fileSHA256: string; // File SHA256 hash (string format for webhook)
+  gifAttribution?: number; // GIF attribution type (0=none, 1=giphy, 2=tenor, etc.) (webhook-specific)
+  gifPlayback?: boolean; // Whether this video should be played as a GIF (webhook-specific)
   height: number;
   mediaKey: string; // Media encryption key (string format for webhook)
   mediaKeyTimestamp: number; // Unix timestamp
@@ -243,7 +245,7 @@ export interface WebhookVideoMessage {
   thumbnailDirectPath?: string; // Thumbnail direct path (webhook-specific)
   thumbnailEncSHA256?: string; // Thumbnail encrypted SHA256 (webhook-specific)
   thumbnailSHA256?: string; // Thumbnail SHA256 (webhook-specific)
-  videoSourceType: number; // Webhook-specific field
+  videoSourceType?: number; // Webhook-specific field
   width: number;
 }
 
@@ -303,6 +305,33 @@ export interface WebhookLocationMessage {
   degreesLongitude: number; // Longitude coordinate
 }
 
+export interface WebhookStickerMessage {
+  URL: string; // Full WhatsApp media URL (uppercase for webhook)
+  contextInfo?: WebhookContextInfo;
+  directPath: string; // Direct path to media
+  fileEncSHA256: string; // Encrypted file SHA256 hash (string format for webhook)
+  fileLength: number; // File size in bytes
+  fileSHA256: string; // File SHA256 hash (string format for webhook)
+  firstFrameLength?: number; // First frame length for animated stickers (webhook-specific)
+  firstFrameSidecar?: string; // First frame sidecar data (webhook-specific)
+  height: number; // Sticker height
+  isAiSticker?: boolean; // Whether this is an AI-generated sticker (webhook-specific)
+  isAnimated?: boolean; // Whether this is an animated sticker (webhook-specific)
+  isAvatar?: boolean; // Whether this is an avatar sticker (webhook-specific)
+  isLottie?: boolean; // Whether this is a Lottie sticker (webhook-specific)
+  mediaKey: string; // Media encryption key (string format for webhook)
+  mediaKeyTimestamp: number; // Unix timestamp
+  mimetype: string; // MIME type (typically "image/webp" for stickers)
+  stickerSentTS?: number; // Sticker sent timestamp (webhook-specific field)
+  width: number; // Sticker width
+}
+
+export interface WebhookReactionMessage {
+  key: WebhookMessageKey; // Key of the message being reacted to
+  senderTimestampMS?: number; // Timestamp when reaction was sent
+  text?: string; // The reaction emoji/text
+}
+
 export interface WebhookEditedMessage {
   message?: unknown; // The edited message content
   timestampMS?: string; // Edit timestamp
@@ -344,9 +373,14 @@ export interface WebhookGenericMessage {
   contactMessage?: WebhookContactMessage;
   pollCreationMessageV3?: WebhookPollCreationMessageV3;
   locationMessage?: WebhookLocationMessage;
+  stickerMessage?: WebhookStickerMessage;
+  reactionMessage?: WebhookReactionMessage;
   editedMessage?: WebhookEditedMessage;
   protocolMessage?: {
     type?: number;
+    editedMessage?: WebhookGenericMessage; // Nested edited message in protocol messages
+    key?: WebhookMessageKey; // Message key for protocol messages
+    timestampMS?: number; // Edit timestamp
     historySyncNotification?: WebhookHistorySyncNotification;
     initialSecurityNotificationSettingSync?: {
       securityNotificationEnabled: boolean;
@@ -369,6 +403,8 @@ export enum MessageType {
   CONTACT = "contactMessage",
   POLL_CREATION = "pollCreationMessageV3",
   LOCATION = "locationMessage",
+  STICKER = "stickerMessage",
+  REACTION = "reactionMessage",
   EDITED = "editedMessage",
   PROTOCOL = "protocolMessage",
   DEVICE_SENT = "deviceSentMessage",
@@ -661,6 +697,8 @@ export function discoverMessageType(
   if (message.documentMessage) return MessageType.DOCUMENT;
   if (message.contactMessage) return MessageType.CONTACT;
   if (message.locationMessage) return MessageType.LOCATION;
+  if (message.stickerMessage) return MessageType.STICKER;
+  if (message.reactionMessage) return MessageType.REACTION;
   if (message.pollCreationMessageV3) return MessageType.POLL_CREATION;
   if (message.editedMessage) return MessageType.EDITED;
   if (message.protocolMessage) return MessageType.PROTOCOL;

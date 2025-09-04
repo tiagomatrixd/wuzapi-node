@@ -1,9 +1,9 @@
 /**
  * Comprehensive Webhook Types Example
- * 
+ *
  * This example demonstrates how to use the comprehensive webhook types and utilities
  * to handle different message types in WhatsApp webhooks with full TypeScript support.
- * 
+ *
  * Features demonstrated:
  * - Complete webhook payload type safety
  * - Message type discovery using discoverMessageType()
@@ -13,18 +13,18 @@
  */
 
 import express from "express";
-import WuzapiClient, { 
-  discoverMessageType, 
+import WuzapiClient, {
+  discoverMessageType,
   MessageType,
   WebhookEventType,
   hasS3Media,
   hasBase64Media,
   hasBothMedia,
-  isWebhookEventType
+  isWebhookEventType,
 } from "wuzapi";
 
 const app = express();
-app.use(express.json({ limit: '50mb' })); // Large limit for media payloads
+app.use(express.json({ limit: "50mb" })); // Large limit for media payloads
 
 const client = new WuzapiClient({
   apiUrl: "http://localhost:8080",
@@ -39,14 +39,22 @@ app.post("/webhook", async (req, res) => {
     const webhookPayload = req.body;
 
     // Validate payload structure
-    if (!webhookPayload.token || !webhookPayload.type || !webhookPayload.event) {
-      return res.status(400).json({ error: "Invalid webhook payload structure" });
+    if (
+      !webhookPayload.token ||
+      !webhookPayload.type ||
+      !webhookPayload.event
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Invalid webhook payload structure" });
     }
 
     // Type-safe event type validation
     if (!isWebhookEventType(webhookPayload.type)) {
       console.warn(`Unknown webhook event type: ${webhookPayload.type}`);
-      return res.status(200).json({ success: true, message: "Unknown event type" });
+      return res
+        .status(200)
+        .json({ success: true, message: "Unknown event type" });
     }
 
     // Security: Verify token
@@ -62,7 +70,7 @@ app.post("/webhook", async (req, res) => {
         url: webhookPayload.s3.url,
         fileName: webhookPayload.s3.fileName,
         mimeType: webhookPayload.s3.mimeType,
-        size: webhookPayload.s3.size
+        size: webhookPayload.s3.size,
       });
     }
 
@@ -70,12 +78,14 @@ app.post("/webhook", async (req, res) => {
       console.log("📎 Base64 Media detected:", {
         mimeType: webhookPayload.mimeType,
         fileName: webhookPayload.fileName,
-        size: webhookPayload.base64?.length || 0
+        size: webhookPayload.base64?.length || 0,
       });
     }
 
     if (hasBothMedia(webhookPayload)) {
-      console.log("📎 Both S3 and Base64 media present - using S3 for efficiency");
+      console.log(
+        "📎 Both S3 and Base64 media present - using S3 for efficiency"
+      );
     }
 
     const { event } = webhookPayload;
@@ -144,19 +154,35 @@ async function handleMessageEvent(event, webhookPayload) {
       break;
 
     case MessageType.IMAGE:
-      await handleImageMessage(event.Message.imageMessage, from, webhookPayload);
+      await handleImageMessage(
+        event.Message.imageMessage,
+        from,
+        webhookPayload
+      );
       break;
 
     case MessageType.VIDEO:
-      await handleVideoMessage(event.Message.videoMessage, from, webhookPayload);
+      await handleVideoMessage(
+        event.Message.videoMessage,
+        from,
+        webhookPayload
+      );
       break;
 
     case MessageType.AUDIO:
-      await handleAudioMessage(event.Message.audioMessage, from, webhookPayload);
+      await handleAudioMessage(
+        event.Message.audioMessage,
+        from,
+        webhookPayload
+      );
       break;
 
     case MessageType.DOCUMENT:
-      await handleDocumentMessage(event.Message.documentMessage, from, webhookPayload);
+      await handleDocumentMessage(
+        event.Message.documentMessage,
+        from,
+        webhookPayload
+      );
       break;
 
     case MessageType.CONTACT:
@@ -171,6 +197,18 @@ async function handleMessageEvent(event, webhookPayload) {
       await handlePollMessage(event.Message.pollCreationMessageV3, from);
       break;
 
+    case MessageType.STICKER:
+      await handleStickerMessage(
+        event.Message.stickerMessage,
+        from,
+        webhookPayload
+      );
+      break;
+
+    case MessageType.REACTION:
+      await handleReactionMessage(event.Message.reactionMessage, from);
+      break;
+
     case MessageType.EDITED:
       await handleEditedMessage(event.Message.editedMessage, from);
       break;
@@ -181,7 +219,9 @@ async function handleMessageEvent(event, webhookPayload) {
 
     case MessageType.DEVICE_SENT:
       console.log("📱 Device sent message - analyzing nested message...");
-      const nestedMessageType = discoverMessageType(event.Message.deviceSentMessage.message);
+      const nestedMessageType = discoverMessageType(
+        event.Message.deviceSentMessage.message
+      );
       console.log(`🔍 Nested message type: ${nestedMessageType}`);
       // Could recursively handle the nested message here
       break;
@@ -198,12 +238,12 @@ async function handleMessageEvent(event, webhookPayload) {
  */
 async function handleTextMessage(textMessage, from) {
   console.log(`📝 Text Message: "${textMessage.text}"`);
-  
+
   // Check for context info (replies, disappearing messages, etc.)
   if (textMessage.contextInfo) {
     console.log("🔗 Context info present:", {
       expiration: textMessage.contextInfo.expiration,
-      isForwarded: textMessage.contextInfo.isForwarded
+      isForwarded: textMessage.contextInfo.isForwarded,
     });
   }
 
@@ -230,7 +270,7 @@ async function handleImageMessage(imageMessage, from, webhookPayload) {
     mimetype: imageMessage.mimetype,
     size: imageMessage.fileLength,
     dimensions: `${imageMessage.width}x${imageMessage.height}`,
-    hasThumb: !!imageMessage.JPEGThumbnail
+    hasThumb: !!imageMessage.JPEGThumbnail,
   });
 
   // Handle S3 or base64 media
@@ -239,7 +279,11 @@ async function handleImageMessage(imageMessage, from, webhookPayload) {
     mediaUrl = webhookPayload.s3.url;
     console.log("📎 Image available at S3:", mediaUrl);
   } else if (hasBase64Media(webhookPayload)) {
-    console.log("📎 Image available as base64 (length:", webhookPayload.base64?.length, ")");
+    console.log(
+      "📎 Image available as base64 (length:",
+      webhookPayload.base64?.length,
+      ")"
+    );
   }
 
   // Send a response
@@ -253,17 +297,29 @@ async function handleImageMessage(imageMessage, from, webhookPayload) {
  * Handle video messages
  */
 async function handleVideoMessage(videoMessage, from, webhookPayload) {
-  console.log(`🎥 Video Message:`, {
+  const isGif = videoMessage.gifPlayback;
+  const mediaType = isGif ? "GIF" : "video";
+
+  console.log(`🎥 ${mediaType.toUpperCase()} Message:`, {
     mimetype: videoMessage.mimetype,
     size: videoMessage.fileLength,
     duration: `${videoMessage.seconds}s`,
     dimensions: `${videoMessage.width}x${videoMessage.height}`,
-    caption: videoMessage.caption || "No caption"
+    caption: videoMessage.caption || "No caption",
+    isGif: isGif,
+    gifAttribution: videoMessage.gifAttribution,
   });
+
+  const attributionText =
+    videoMessage.gifAttribution === 1
+      ? " from Giphy"
+      : videoMessage.gifAttribution === 2
+      ? " from Tenor"
+      : "";
 
   await client.chat.sendText({
     Phone: from,
-    Body: `🎬 Thanks for the video! Duration: ${videoMessage.seconds} seconds`,
+    Body: `🎬 Thanks for the ${mediaType}${attributionText}! Duration: ${videoMessage.seconds} seconds`,
   });
 }
 
@@ -276,12 +332,14 @@ async function handleAudioMessage(audioMessage, from, webhookPayload) {
     mimetype: audioMessage.mimetype,
     size: audioMessage.fileLength,
     duration: `${audioMessage.seconds}s`,
-    hasWaveform: !!audioMessage.waveform
+    hasWaveform: !!audioMessage.waveform,
   });
 
   await client.chat.sendText({
     Phone: from,
-    Body: isVoiceMessage ? "🎤 Voice message received!" : "🎵 Audio message received!",
+    Body: isVoiceMessage
+      ? "🎤 Voice message received!"
+      : "🎵 Audio message received!",
   });
 }
 
@@ -294,12 +352,14 @@ async function handleDocumentMessage(documentMessage, from, webhookPayload) {
     title: documentMessage.title,
     mimetype: documentMessage.mimetype,
     size: documentMessage.fileLength,
-    pages: documentMessage.pageCount || "Unknown"
+    pages: documentMessage.pageCount || "Unknown",
   });
 
   await client.chat.sendText({
     Phone: from,
-    Body: `📋 Document received: "${documentMessage.fileName}"${documentMessage.pageCount ? ` (${documentMessage.pageCount} pages)` : ""}`,
+    Body: `📋 Document received: "${documentMessage.fileName}"${
+      documentMessage.pageCount ? ` (${documentMessage.pageCount} pages)` : ""
+    }`,
   });
 }
 
@@ -309,7 +369,7 @@ async function handleDocumentMessage(documentMessage, from, webhookPayload) {
 async function handleContactMessage(contactMessage, from) {
   console.log(`👤 Contact Message:`, {
     displayName: contactMessage.displayName,
-    vcard: contactMessage.vcard.substring(0, 100) + "..."
+    vcard: contactMessage.vcard.substring(0, 100) + "...",
   });
 
   await client.chat.sendText({
@@ -325,12 +385,12 @@ async function handleLocationMessage(locationMessage, from) {
   console.log(`📍 Location Message:`, {
     latitude: locationMessage.degreesLatitude,
     longitude: locationMessage.degreesLongitude,
-    hasThumb: !!locationMessage.JPEGThumbnail
+    hasThumb: !!locationMessage.JPEGThumbnail,
   });
 
   // Create Google Maps link
   const mapsLink = `https://maps.google.com/?q=${locationMessage.degreesLatitude},${locationMessage.degreesLongitude}`;
-  
+
   await client.chat.sendText({
     Phone: from,
     Body: `📍 Location received!\n🌍 View on Maps: ${mapsLink}`,
@@ -344,11 +404,13 @@ async function handlePollMessage(pollMessage, from) {
   console.log(`🗳️ Poll Message:`, {
     question: pollMessage.name,
     optionsCount: pollMessage.options.length,
-    multiSelect: pollMessage.selectableOptionsCount > 0
+    multiSelect: pollMessage.selectableOptionsCount > 0,
   });
 
-  const options = pollMessage.options.map(opt => `• ${opt.optionName}`).join("\n");
-  
+  const options = pollMessage.options
+    .map((opt) => `• ${opt.optionName}`)
+    .join("\n");
+
   await client.chat.sendText({
     Phone: from,
     Body: `🗳️ Poll created: "${pollMessage.name}"\nOptions:\n${options}`,
@@ -361,7 +423,7 @@ async function handlePollMessage(pollMessage, from) {
 async function handleEditedMessage(editedMessage, from) {
   console.log(`✏️ Message Edited:`, {
     editedMessageID: editedMessage.editedMessageID,
-    timestamp: editedMessage.timestampMS
+    timestamp: editedMessage.timestampMS,
   });
 
   await client.chat.sendText({
@@ -371,16 +433,80 @@ async function handleEditedMessage(editedMessage, from) {
 }
 
 /**
+ * Handle sticker messages
+ */
+async function handleStickerMessage(stickerMessage, from, webhookPayload) {
+  console.log(`🎭 Sticker Message:`, {
+    mimetype: stickerMessage.mimetype,
+    size: stickerMessage.fileLength,
+    dimensions: `${stickerMessage.width}x${stickerMessage.height}`,
+    isAnimated: stickerMessage.isAnimated,
+    isLottie: stickerMessage.isLottie,
+    isAiSticker: stickerMessage.isAiSticker,
+    isAvatar: stickerMessage.isAvatar,
+  });
+
+  // Handle S3 or base64 media
+  let mediaUrl = null;
+  if (hasS3Media(webhookPayload)) {
+    mediaUrl = webhookPayload.s3.url;
+    console.log("📎 Sticker available at S3:", mediaUrl);
+  } else if (hasBase64Media(webhookPayload)) {
+    console.log("📎 Sticker available as base64");
+  }
+
+  const stickerType = stickerMessage.isAnimated ? "animated" : "static";
+  const stickerSource = stickerMessage.isAiSticker ? " (AI-generated)" : "";
+
+  await client.chat.sendText({
+    Phone: from,
+    Body: `🎭 Nice ${stickerType} sticker${stickerSource}!`,
+  });
+}
+
+/**
+ * Handle reaction messages
+ */
+async function handleReactionMessage(reactionMessage, from) {
+  console.log(`❤️ Reaction Message:`, {
+    emoji: reactionMessage.text,
+    targetMessageId: reactionMessage.key.ID,
+    fromOriginalSender: reactionMessage.key.fromMe,
+    timestamp: reactionMessage.senderTimestampMS,
+  });
+
+  await client.chat.sendText({
+    Phone: from,
+    Body: `Thanks for the ${reactionMessage.text || "reaction"}! 😊`,
+  });
+}
+
+/**
  * Handle protocol messages (system messages)
  */
 async function handleProtocolMessage(protocolMessage, from) {
   console.log(`🔧 Protocol Message:`, {
     type: protocolMessage.type,
-    hasHistorySync: !!protocolMessage.historySyncNotification
+    hasHistorySync: !!protocolMessage.historySyncNotification,
+    hasEditedMessage: !!protocolMessage.editedMessage,
   });
 
   if (protocolMessage.historySyncNotification) {
     console.log("📚 History sync notification received");
+  }
+
+  if (protocolMessage.editedMessage) {
+    console.log("✏️ Message edit detected in protocol message");
+    // The edited message content is nested in protocolMessage.editedMessage
+    const nestedMessageType = discoverMessageType(
+      protocolMessage.editedMessage
+    );
+    console.log(`🔍 Edited message type: ${nestedMessageType}`);
+
+    await client.chat.sendText({
+      Phone: from,
+      Body: "✏️ I noticed you edited a message!",
+    });
   }
 }
 
@@ -393,7 +519,7 @@ async function handleReadReceiptEvent(event) {
     chat: event.Chat,
     type: event.Type,
     messageCount: event.MessageIDs?.length || 0,
-    timestamp: event.Timestamp
+    timestamp: event.Timestamp,
   });
 }
 
@@ -402,7 +528,7 @@ async function handleReadReceiptEvent(event) {
  */
 async function handleQREvent(event, webhookPayload) {
   console.log("📱 QR Code event received");
-  
+
   if (webhookPayload.qrCodeBase64) {
     console.log("📱 QR Code available as base64 data URL");
     // You could save this to a file or display it
@@ -416,7 +542,7 @@ async function handleQREvent(event, webhookPayload) {
  */
 async function handleConnectedEvent(event) {
   console.log("✅ WhatsApp connected successfully!");
-  
+
   // Send a welcome message to yourself or admin
   // await client.chat.sendText({
   //   Phone: "your-admin-number",
@@ -435,7 +561,7 @@ async function handleHistorySyncEvent(event) {
     hasConversations: !!event.Data?.conversations,
     hasStatusMessages: !!event.Data?.statusV3Messages,
     hasParticipants: !!event.Data?.pastParticipants,
-    hasStickers: !!event.Data?.recentStickers
+    hasStickers: !!event.Data?.recentStickers,
   });
 }
 
@@ -448,7 +574,9 @@ app.listen(PORT, () => {
   console.log(`🚀 Webhook server running on port ${PORT}`);
   console.log(`📡 Webhook URL: http://localhost:${PORT}/webhook`);
   console.log("\n🔧 Setup your WuzAPI webhook:");
-  console.log(`   webhook.setWebhook("http://localhost:${PORT}/webhook", ["Message", "ReadReceipt", "Connected", "QR"])`);
+  console.log(
+    `   webhook.setWebhook("http://localhost:${PORT}/webhook", ["Message", "ReadReceipt", "Connected", "QR"])`
+  );
 });
 
 /**
@@ -465,10 +593,10 @@ async function setupWuzapi() {
     // Set webhook
     await client.webhook.setWebhook(`http://localhost:${PORT}/webhook`, [
       "Message",
-      "ReadReceipt", 
+      "ReadReceipt",
       "Connected",
       "QR",
-      "HistorySync"
+      "HistorySync",
     ]);
 
     console.log("✅ WuzAPI setup complete!");
