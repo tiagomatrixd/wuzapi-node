@@ -50,19 +50,19 @@ export interface CreateUserResponse {
   token: string;
   webhook?: string;
   events?: string;
-  proxy_config?: {
+  proxy_config: {
     enabled: boolean;
     proxy_url: string;
   };
-  s3_config?: {
+  s3_config: {
+    access_key: string;
+    bucket: string;
     enabled: boolean;
     endpoint: string;
-    region: string;
-    bucket: string;
-    access_key: string;
+    media_delivery: string;
     path_style: boolean;
     public_url: string;
-    media_delivery: string;
+    region: string;
     retention_days: number;
   };
 }

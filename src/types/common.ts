@@ -3,6 +3,7 @@
 export interface WuzapiConfig {
   apiUrl: string;
   token?: string;
+  debug?: boolean;
 }
 
 export interface RequestOptions {

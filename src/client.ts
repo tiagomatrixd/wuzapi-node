@@ -75,6 +75,10 @@ export class BaseClient {
     options?: RequestOptions
   ): Promise<T> {
     const token = this.resolveToken(options);
+    if (this.config.debug) {
+      // eslint-disable-next-line no-undef
+      console.log(`[${method}] ${endpoint}`, token, data);
+    }
 
     const response = await this.axios.request<WuzapiResponse<T>>({
       method,
@@ -85,6 +89,11 @@ export class BaseClient {
         Authorization: token,
       },
     });
+
+    if (this.config.debug) {
+      // eslint-disable-next-line no-undef
+      console.log(`[${method}] ${endpoint}`, response.status, response.data);
+    }
 
     if (!response.data.success) {
       throw new WuzapiError(
