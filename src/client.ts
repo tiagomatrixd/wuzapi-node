@@ -96,7 +96,7 @@ export class BaseClient {
     if (response.data.code <= 200 && response.data.code >= 300) {
       throw new WuzapiError(
         response.data.code,
-        "API request failed",
+        response.data.error || "API request failed",
         response.data
       );
     }

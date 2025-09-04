@@ -13,6 +13,7 @@ export interface WuzapiResponse<T = unknown> {
   code: number;
   data: T;
   success: boolean;
+  error?: string;
 }
 
 export interface SimpleContextInfo {
