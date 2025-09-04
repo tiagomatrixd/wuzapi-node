@@ -4,6 +4,7 @@ import {
   WuzapiResponse,
   RequestOptions,
 } from "./types/common.js";
+import { logger } from "./utils/logger.js";
 
 export class WuzapiError extends Error {
   public code: number;
@@ -20,6 +21,9 @@ export class WuzapiError extends Error {
 export class BaseClient {
   protected axios: AxiosInstance;
   protected config: WuzapiConfig;
+  protected defaultHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
 
   constructor(config: WuzapiConfig) {
     this.config = config;
@@ -57,7 +61,7 @@ export class BaseClient {
    * Resolve the token from request options or instance config
    * Throws an error if no token is available
    */
-  private resolveToken(options?: RequestOptions): string {
+  private buildHeaders(options?: RequestOptions): Record<string, string> {
     const token = options?.token || this.config.token;
     if (!token) {
       throw new WuzapiError(
@@ -65,7 +69,16 @@ export class BaseClient {
         "No authentication token provided. Either set a token in the client config or provide one in the request options."
       );
     }
-    return token;
+    if (options?.token) {
+      return {
+        ...this.defaultHeaders,
+        Token: options.token,
+      };
+    }
+    return {
+      ...this.defaultHeaders,
+      Authorization: token,
+    };
   }
 
   protected async request<T>(
@@ -74,25 +87,23 @@ export class BaseClient {
     data?: unknown,
     options?: RequestOptions
   ): Promise<T> {
-    const token = this.resolveToken(options);
+    const headers = this.buildHeaders(options);
     if (this.config.debug) {
-      // eslint-disable-next-line no-undef
-      console.log(`[${method}] ${endpoint}`, token, data);
+      logger.request(`[${method}] ${endpoint}`, { headers, data });
     }
 
     const response = await this.axios.request<WuzapiResponse<T>>({
       method,
       url: endpoint,
       data,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token,
-      },
+      headers,
     });
 
     if (this.config.debug) {
-      // eslint-disable-next-line no-undef
-      console.log(`[${method}] ${endpoint}`, response.status, response.data);
+      logger.response(`[${method}] ${endpoint}`, {
+        status: response.status,
+        data: response.data,
+      });
     }
 
     if (!response.data.success) {
