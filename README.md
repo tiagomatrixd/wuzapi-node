@@ -209,6 +209,7 @@ Check out the complete examples in the `examples/` directory:
 - **[advanced-features.js](examples/advanced-features.js)** - Phone pairing, interactive messages, advanced group management
 - **[chatbot-example.js](examples/chatbot-example.js)** - Complete bot with commands and auto-replies
 - **[webhook-events-example.js](examples/webhook-events-example.js)** - Comprehensive webhook event handling
+- **[webhook-types-example.js](examples/webhook-types-example.js)** - ⭐ **NEW!** Complete webhook types with message discovery utilities
 
 ### Run Examples
 
@@ -221,6 +222,9 @@ node examples/advanced-features.js
 
 # Start chatbot
 node examples/chatbot-example.js
+
+# Webhook types example (with complete type safety)
+node examples/webhook-types-example.js
 ```
 
 ## 🤖 Simple Bot Example
@@ -891,6 +895,93 @@ newsletters.Newsletters.forEach((newsletter) => {
 ## 🎣 Webhook Event Handling
 
 WuzAPI sends real-time events to your webhook endpoint. Here's how to handle them:
+
+### 🆕 Type-Safe Message Discovery
+
+The library now includes comprehensive TypeScript types and utilities for handling webhook messages:
+
+```typescript
+import WuzapiClient, {
+  discoverMessageType,
+  MessageType,
+  hasS3Media,
+  hasBase64Media,
+} from "wuzapi";
+
+// Discover message type automatically
+const messageType = discoverMessageType(webhookPayload.event.Message);
+
+switch (messageType) {
+  case MessageType.EXTENDED_TEXT:
+    console.log("Text:", webhookPayload.event.Message.extendedTextMessage.text);
+    break;
+
+  case MessageType.IMAGE:
+    const imageMsg = webhookPayload.event.Message.imageMessage;
+    console.log("Image:", imageMsg.mimetype, imageMsg.fileLength);
+    break;
+
+  case MessageType.VIDEO:
+    const videoMsg = webhookPayload.event.Message.videoMessage;
+    console.log("Video:", `${videoMsg.seconds}s`, videoMsg.caption);
+    break;
+
+  case MessageType.AUDIO:
+    const audioMsg = webhookPayload.event.Message.audioMessage;
+    console.log(audioMsg.ptt ? "Voice message" : "Audio file");
+    break;
+
+  case MessageType.DOCUMENT:
+    const docMsg = webhookPayload.event.Message.documentMessage;
+    console.log("Document:", docMsg.fileName, `${docMsg.pageCount} pages`);
+    break;
+
+  case MessageType.CONTACT:
+    const contactMsg = webhookPayload.event.Message.contactMessage;
+    console.log("Contact:", contactMsg.displayName);
+    break;
+
+  case MessageType.LOCATION:
+    const locationMsg = webhookPayload.event.Message.locationMessage;
+    console.log(
+      "Location:",
+      locationMsg.degreesLatitude,
+      locationMsg.degreesLongitude
+    );
+    break;
+
+  case MessageType.POLL_CREATION:
+    const pollMsg = webhookPayload.event.Message.pollCreationMessageV3;
+    console.log("Poll:", pollMsg.name, `${pollMsg.options.length} options`);
+    break;
+}
+
+// Handle media intelligently
+if (hasS3Media(webhookPayload)) {
+  console.log("S3 URL:", webhookPayload.s3.url);
+} else if (hasBase64Media(webhookPayload)) {
+  console.log("Base64 media available");
+}
+```
+
+### 🎯 Available Message Types
+
+```typescript
+enum MessageType {
+  EXTENDED_TEXT = "extendedTextMessage", // Text messages
+  IMAGE = "imageMessage", // Photos, screenshots
+  VIDEO = "videoMessage", // Video files
+  AUDIO = "audioMessage", // Audio files, voice messages
+  DOCUMENT = "documentMessage", // PDFs, Word docs, etc.
+  CONTACT = "contactMessage", // Shared contacts
+  LOCATION = "locationMessage", // Location pins
+  POLL_CREATION = "pollCreationMessageV3", // Polls (groups only)
+  EDITED = "editedMessage", // Edited messages
+  PROTOCOL = "protocolMessage", // System messages
+  DEVICE_SENT = "deviceSentMessage", // Multi-device messages
+  UNKNOWN = "unknown", // Unrecognized types
+}
+```
 
 ### Basic Webhook Setup
 
