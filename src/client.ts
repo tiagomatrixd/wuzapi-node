@@ -81,7 +81,8 @@ export class BaseClient {
       url: endpoint,
       data,
       headers: {
-        Token: token,
+        "Content-Type": "application/json",
+        Authorization: token,
       },
     });
 
