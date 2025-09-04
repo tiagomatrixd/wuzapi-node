@@ -1,4 +1,5 @@
-import { S3Config } from "./common.js";
+import { S3ConfigResponse } from "./common.js";
+import { WebhookEvent } from "./webhook.js";
 
 // Session endpoints types
 
@@ -23,16 +24,25 @@ export interface LogoutResponse {
 }
 
 export interface StatusResponse {
-  Connected: boolean;
-  LoggedIn: boolean;
+  connected: boolean;
+  events: (WebhookEvent | string)[];
+  id: string;
+  jid: string;
+  loggedIn: boolean;
+  name: string;
+  proxy_config: {
+    enabled: boolean;
+    proxy_url: string;
+  };
+  proxy_url: string;
+  qrcode: string;
+  s3_config: S3ConfigResponse;
+  token: string;
+  webhook: string;
 }
 
 export interface QRCodeResponse {
   QRCode: string;
-}
-
-export interface S3ConfigResponse extends S3Config {
-  accessKey: string; // Will be masked in response
 }
 
 export interface S3TestResponse {

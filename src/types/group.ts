@@ -1,29 +1,47 @@
 // Group endpoints types
 
 export interface GroupParticipant {
+  AddRequest: null;
+  DisplayName: string;
+  Error: number;
   IsAdmin: boolean;
   IsSuperAdmin: boolean;
   JID: string;
+  LID: string;
+  PhoneNumber: string;
 }
 
 export interface GroupInfo {
+  AddressingMode: string;
   AnnounceVersionID: string;
+  CreatorCountryCode: string;
+  DefaultMembershipApprovalMode: string;
   DisappearingTimer: number;
   GroupCreated: string;
   IsAnnounce: boolean;
+  IsDefaultSubGroup: boolean;
   IsEphemeral: boolean;
+  IsIncognito: boolean;
+  IsJoinApprovalRequired: boolean;
   IsLocked: boolean;
+  IsParent: boolean;
   JID: string;
+  LinkedParentJID: string;
+  MemberAddMode: string;
   Name: string;
   NameSetAt: string;
   NameSetBy: string;
+  NameSetByPN: string;
   OwnerJID: string;
+  OwnerPN: string;
   ParticipantVersionID: string;
   Participants: GroupParticipant[];
   Topic: string;
+  TopicDeleted: boolean;
   TopicID: string;
   TopicSetAt: string;
   TopicSetBy: string;
+  TopicSetByPN: string;
 }
 
 export interface GroupListResponse {

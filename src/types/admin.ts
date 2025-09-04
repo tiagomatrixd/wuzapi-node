@@ -1,17 +1,24 @@
 // Admin endpoints types
+import { S3ConfigResponse } from "./common.js";
+import { WebhookEvent } from "./webhook.js";
 
 export interface User {
+  connected: boolean;
+  events: WebhookEvent | string;
+  expiration: number;
   id: string;
+  jid: string;
+  loggedIn: boolean;
   name: string;
+  proxy_config: {
+    enabled: boolean;
+    proxy_url: string;
+  };
+  proxy_url: string;
+  qrcode: string;
+  s3_config: S3ConfigResponse;
   token: string;
   webhook: string;
-  jid: string;
-  qrcode: string;
-  connected: boolean;
-  loggedIn: boolean;
-  expiration: number;
-  events: string;
-  proxy_url: string;
 }
 
 export interface CreateUserRequest {

@@ -38,3 +38,15 @@ export interface S3Config {
   mediaDelivery: "base64" | "s3" | "both";
   retentionDays: number;
 }
+
+export interface S3ConfigResponse {
+  access_key: string;
+  bucket: string;
+  enabled: boolean;
+  endpoint: string;
+  media_delivery?: "base64" | "s3" | "both";
+  path_style?: boolean;
+  public_url?: string;
+  region?: string;
+  retention_days?: number;
+}

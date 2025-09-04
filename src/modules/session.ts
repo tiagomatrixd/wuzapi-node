@@ -6,7 +6,6 @@ import {
   LogoutResponse,
   StatusResponse,
   QRCodeResponse,
-  S3ConfigResponse,
   S3TestResponse,
   PairPhoneRequest,
   PairPhoneResponse,
@@ -14,7 +13,7 @@ import {
   ProxyRequest,
   ProxyResponse,
 } from "../types/session.js";
-import { S3Config, RequestOptions } from "../types/common.js";
+import { S3Config, RequestOptions, S3ConfigResponse } from "../types/common.js";
 
 export class SessionModule extends BaseClient {
   /**
