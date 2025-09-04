@@ -81,11 +81,19 @@ export class BaseClient {
       url: endpoint,
       data,
       headers: {
-        Authorization: token,
+        Token: token,
       },
     });
 
     if (!response.data.success) {
+      throw new WuzapiError(
+        response.data.code,
+        "API request failed",
+        response.data
+      );
+    }
+
+    if (response.data.code <= 200 && response.data.code >= 300) {
       throw new WuzapiError(
         response.data.code,
         "API request failed",
