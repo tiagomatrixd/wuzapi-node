@@ -371,11 +371,32 @@ export interface WebhookGenericMessage {
   audioMessage?: WebhookAudioMessage;
   documentMessage?: WebhookDocumentMessage;
   contactMessage?: WebhookContactMessage;
-  pollCreationMessageV3?: WebhookPollCreationMessageV3;
   locationMessage?: WebhookLocationMessage;
   stickerMessage?: WebhookStickerMessage;
   reactionMessage?: WebhookReactionMessage;
   editedMessage?: WebhookEditedMessage;
+
+  // Interactive messages
+  // TODO: define proper interfaces
+  buttonsMessage?: unknown;
+  listMessage?: unknown;
+  templateMessage?: unknown;
+
+  // Response messages
+  buttonsResponseMessage?: unknown;
+  listResponseMessage?: unknown;
+
+  // Group messages
+  groupInviteMessage?: unknown;
+
+  // Poll messages
+  pollCreationMessage?: unknown;
+  pollCreationMessageV3?: WebhookPollCreationMessageV3;
+  pollUpdateMessage?: unknown;
+
+  // Special messages
+  viewOnceMessage?: unknown;
+
   protocolMessage?: {
     type?: number;
     editedMessage?: WebhookGenericMessage; // Nested edited message in protocol messages
@@ -401,13 +422,33 @@ export enum MessageType {
   AUDIO = "audioMessage",
   DOCUMENT = "documentMessage",
   CONTACT = "contactMessage",
-  POLL_CREATION = "pollCreationMessageV3",
   LOCATION = "locationMessage",
   STICKER = "stickerMessage",
   REACTION = "reactionMessage",
   EDITED = "editedMessage",
   PROTOCOL = "protocolMessage",
   DEVICE_SENT = "deviceSentMessage",
+
+  // Interactive messages
+  BUTTONS = "buttonsMessage",
+  LIST = "listMessage",
+  TEMPLATE = "templateMessage",
+
+  // Response messages
+  BUTTONS_RESPONSE = "buttonsResponseMessage",
+  LIST_RESPONSE = "listResponseMessage",
+
+  // Group messages
+  GROUP_INVITE = "groupInviteMessage",
+
+  // Poll messages
+  POLL = "pollCreationMessage",
+  POLL_CREATION = "pollCreationMessageV3",
+  POLL_UPDATE = "pollUpdateMessage",
+
+  // Special messages
+  VIEW_ONCE = "viewOnceMessage",
+
   UNKNOWN = "unknown",
 }
 // History sync notification structure
@@ -699,7 +740,28 @@ export function discoverMessageType(
   if (message.locationMessage) return MessageType.LOCATION;
   if (message.stickerMessage) return MessageType.STICKER;
   if (message.reactionMessage) return MessageType.REACTION;
+
+  // Interactive messages
+  if (message.buttonsMessage) return MessageType.BUTTONS;
+  if (message.listMessage) return MessageType.LIST;
+  if (message.templateMessage) return MessageType.TEMPLATE;
+
+  // Response messages
+  if (message.buttonsResponseMessage) return MessageType.BUTTONS_RESPONSE;
+  if (message.listResponseMessage) return MessageType.LIST_RESPONSE;
+
+  // Group messages
+  if (message.groupInviteMessage) return MessageType.GROUP_INVITE;
+
+  // Poll messages
+  if (message.pollCreationMessage) return MessageType.POLL;
   if (message.pollCreationMessageV3) return MessageType.POLL_CREATION;
+  if (message.pollUpdateMessage) return MessageType.POLL_UPDATE;
+
+  // Special messages
+  if (message.viewOnceMessage) return MessageType.VIEW_ONCE;
+
+  // System messages
   if (message.editedMessage) return MessageType.EDITED;
   if (message.protocolMessage) return MessageType.PROTOCOL;
   if (message.deviceSentMessage) return MessageType.DEVICE_SENT;

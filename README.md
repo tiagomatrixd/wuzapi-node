@@ -977,6 +977,38 @@ switch (messageType) {
     const pollMsg = webhookPayload.event.Message.pollCreationMessageV3;
     console.log("Poll:", pollMsg.name, `${pollMsg.options.length} options`);
     break;
+
+  case MessageType.BUTTONS_RESPONSE:
+    const buttonResponse = webhookPayload.event.Message.buttonsResponseMessage;
+    console.log("Button clicked:", buttonResponse.selectedButtonId);
+    break;
+
+  case MessageType.LIST_RESPONSE:
+    const listResponse = webhookPayload.event.Message.listResponseMessage;
+    console.log(
+      "List item selected:",
+      listResponse.singleSelectReply.selectedRowId
+    );
+    break;
+
+  case MessageType.GROUP_INVITE:
+    const groupInvite = webhookPayload.event.Message.groupInviteMessage;
+    console.log("Group invite:", groupInvite.groupName);
+    break;
+
+  case MessageType.VIEW_ONCE:
+    const viewOnceMsg = webhookPayload.event.Message.viewOnceMessage;
+    console.log("View once message received");
+    break;
+
+  // Handle other new message types
+  case MessageType.BUTTONS:
+  case MessageType.LIST:
+  case MessageType.TEMPLATE:
+  case MessageType.POLL:
+  case MessageType.POLL_UPDATE:
+    console.log(`Interactive message type: ${messageType}`);
+    break;
 }
 
 // Handle media intelligently
@@ -991,20 +1023,47 @@ if (hasS3Media(webhookPayload)) {
 
 ```typescript
 enum MessageType {
+  // Basic messages
   TEXT = "conversation", // Simple text messages
   EXTENDED_TEXT = "extendedTextMessage", // Rich text messages
+
+  // Media messages
   IMAGE = "imageMessage", // Photos, screenshots
   VIDEO = "videoMessage", // Video files, GIFs
   AUDIO = "audioMessage", // Audio files, voice messages
   DOCUMENT = "documentMessage", // PDFs, Word docs, etc.
+  STICKER = "stickerMessage", // Stickers (animated/static)
+
+  // Contact & location
   CONTACT = "contactMessage", // Shared contacts
   LOCATION = "locationMessage", // Location pins
-  STICKER = "stickerMessage", // Stickers (animated/static)
+
+  // Interactive messages
+  BUTTONS = "buttonsMessage", // Interactive buttons
+  LIST = "listMessage", // List menus
+  TEMPLATE = "templateMessage", // Template messages
+
+  // Response messages
+  BUTTONS_RESPONSE = "buttonsResponseMessage", // Button click responses
+  LIST_RESPONSE = "listResponseMessage", // List selection responses
+
+  // Group messages
+  GROUP_INVITE = "groupInviteMessage", // Group invitations
+
+  // Poll messages
+  POLL = "pollCreationMessage", // Polls (standard)
+  POLL_CREATION = "pollCreationMessageV3", // Polls (v3)
+  POLL_UPDATE = "pollUpdateMessage", // Poll vote updates
+
+  // Special messages
+  VIEW_ONCE = "viewOnceMessage", // View once messages
   REACTION = "reactionMessage", // Message reactions (emoji)
-  POLL_CREATION = "pollCreationMessageV3", // Polls (groups only)
   EDITED = "editedMessage", // Edited messages
+
+  // System messages
   PROTOCOL = "protocolMessage", // System messages
   DEVICE_SENT = "deviceSentMessage", // Multi-device messages
+
   UNKNOWN = "unknown", // Unrecognized types
 }
 ```
