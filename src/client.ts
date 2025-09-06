@@ -77,7 +77,7 @@ export class BaseClient {
     }
     return {
       ...this.defaultHeaders,
-      Authorization: token,
+      Token: token,
     };
   }
 
