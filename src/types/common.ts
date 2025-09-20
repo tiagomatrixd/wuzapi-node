@@ -18,8 +18,9 @@ export interface WuzapiResponse<T = unknown> {
 }
 
 export interface SimpleContextInfo {
-  StanzaID: string;
-  Participant: string;
+  StanzaID?: string;
+  Participant?: string;
+  mentionedJID?: string[];
 }
 
 export interface ProxyConfig {
