@@ -13,9 +13,12 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "src",
+    "tsconfig.json",
+    "vite.config.js"
   ],
-  "scripts": {
+   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
@@ -24,6 +27,7 @@
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
+    "prepare": "npm run build",
     "prepublishOnly": "npm run lint && npm run type-check && npm run build",
     "release:patch": "npm version patch && npm publish",
     "release:minor": "npm version minor && npm publish",
