@@ -48,7 +48,7 @@ export interface UserAvatarRequest {
 }
 
 export interface UserAvatarResponse {
-  URL: string;
+  url: string;
   ID: string;
   Type: string;
   DirectPath: string;
