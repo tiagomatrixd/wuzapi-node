@@ -23,6 +23,7 @@ import {
   SendPollRequest,
   EditMessageRequest,
   ListSection,
+  SendInteractiveRequest,
 } from "../types/chat.js";
 
 export class ChatModule extends BaseClient {
@@ -310,5 +311,42 @@ export class ChatModule extends BaseClient {
       Body: newBody,
     };
     return this.post<SendMessageResponse>("/chat/send/edit", request, options);
+  }
+
+  /**
+   * Send interactive message with custom buttons and native flow support
+   */
+  async sendInteractive(
+    request: SendInteractiveRequest,
+    options?: RequestOptions
+  ): Promise<SendMessageResponse> {
+    return this.post<SendMessageResponse>(
+      "/chat/send/interactive",
+      request,
+      options
+    );
+  }
+
+  /**
+   * Send interactive message with multiple menus
+   */
+  async sendMultiMenuInteractive(
+    phone: string,
+    message: string,
+    title: string,
+    menus: { title: string; buttons: { displayText: string; buttonID: string }[] }[],
+    footer?: string,
+    additionalNodes?: any[],
+    options?: RequestOptions
+  ): Promise<SendMessageResponse> {
+    const request: SendInteractiveRequest = {
+      phone,
+      message,
+      title,
+      footer,
+      menus,
+      additionalNodes,
+    };
+    return this.sendInteractive(request, options);
   }
 }

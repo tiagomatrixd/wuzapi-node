@@ -449,6 +449,77 @@ await client.chat.sendPoll(
   "What's your favorite color?", // Header
   ["Red", "Blue", "Green"] // Options array
 );
+
+// Send interactive message with native flow support
+await client.chat.sendInteractive({
+  phone: "5491155554444",
+  message: "Choose an option from the menu:",
+  title: "🔮 Main Menu",
+  footer: "Select one option",
+  buttons: [
+    { displayText: "📊 Reports", buttonID: "menu_reports" },
+    { displayText: "⚙️ Settings", buttonID: "menu_settings" },
+    { displayText: "❓ Help", buttonID: "menu_help" }
+  ],
+  additionalNodes: [
+    {
+     ...
+    }
+  ]
+});
+
+// Send interactive message with multiple menus
+await client.chat.sendInteractive({
+  phone: "120363345575931493@g.us",
+  message: "Select an option from the categories below:",
+  title: "🚀 Control Panel",
+  footer: "Choose one of the options",
+  menus: [
+    {
+      title: "Admin Menu",
+      buttons: [
+        { displayText: "👤 Users", buttonID: "?admin users" },
+        { displayText: "📊 Reports", buttonID: "?admin reports" }
+      ]
+    },
+    {
+      title: "Tools Menu",
+      buttons: [
+        { displayText: "🔧 Settings", buttonID: "?tools settings" },
+        { displayText: "💾 Backup", buttonID: "?tools backup" }
+      ]
+    }
+  ],
+  additionalNodes: [
+    {
+     ...
+    }
+  ]
+});
+
+// Helper method for multi-menu interactive messages
+await client.chat.sendMultiMenuInteractive(
+  "120363345575931493@g.us", // phone
+  "Select from the categories:", // message
+  "🎯 Navigation Hub", // title
+  [
+    {
+      title: "Category 1",
+      buttons: [
+        { displayText: "Option A", buttonID: "cat1_a" },
+        { displayText: "Option B", buttonID: "cat1_b" }
+      ]
+    },
+    {
+      title: "Category 2", 
+      buttons: [
+        { displayText: "Option C", buttonID: "cat2_c" },
+        { displayText: "Option D", buttonID: "cat2_d" }
+      ]
+    }
+  ],
+  "Powered by WuzAPI" // footer (optional)
+);
 ```
 
 ### Message Management

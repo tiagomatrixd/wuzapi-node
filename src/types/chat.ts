@@ -174,3 +174,39 @@ export interface EditMessageRequest {
   Phone: string;
   Body: string;
 }
+
+export interface InteractiveButton {
+  displayText: string;
+  buttonID: string;
+}
+
+export interface InteractiveMenu {
+  title: string;
+  buttons: InteractiveButton[];
+}
+
+export interface AdditionalNodeAttrs {
+  [key: string]: any;
+}
+
+export interface AdditionalNodeContent {
+  tag: string;
+  attrs: AdditionalNodeAttrs;
+  content?: AdditionalNodeContent[];
+}
+
+export interface AdditionalNode {
+  tag: string;
+  attrs: AdditionalNodeAttrs;
+  content: AdditionalNodeContent[];
+}
+
+export interface SendInteractiveRequest {
+  phone: string;
+  message: string;
+  title?: string;
+  footer?: string;
+  buttons?: InteractiveButton[]; // For single menu (backward compatibility)
+  menus?: InteractiveMenu[]; // For multiple menus
+  additionalNodes?: AdditionalNode[];
+}
