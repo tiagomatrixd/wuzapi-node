@@ -33,6 +33,8 @@ export interface SendTemplateRequest {
 export interface SendAudioRequest {
   Phone: string;
   Audio: string; // base64 encoded
+  PPT?: string; // base64 encoded
+  MimeType?: string;
   ContextInfo?: SimpleContextInfo;
 }
 
@@ -113,7 +115,9 @@ export interface DownloadMediaResponse {
 }
 
 export interface DeleteMessageRequest {
+  Phone: string;
   Id: string;
+  Sender: string;
 }
 
 export interface DeleteMessageResponse {

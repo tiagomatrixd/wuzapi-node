@@ -224,13 +224,13 @@ export class ChatModule extends BaseClient {
   }
 
   /**
-   * Delete a message
+   * Delete a message to everyone
    */
   async deleteMessage(
-    messageId: string,
+   request: DeleteMessageRequest,
     options?: RequestOptions
   ): Promise<DeleteMessageResponse> {
-    const request: DeleteMessageRequest = { Id: messageId };
+    
     return this.post<DeleteMessageResponse>("/chat/delete", request, options);
   }
 
