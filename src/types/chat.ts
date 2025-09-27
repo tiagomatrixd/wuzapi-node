@@ -151,6 +151,23 @@ export interface ListSection {
   Rows: ListItem[];
 }
 
+export interface ListRow {
+    title: string;
+    description: string;
+    header?: string;
+    id: string;
+}
+
+export interface ListSection {
+    title: string;
+    rows: ListRow[];
+}
+
+export interface ListMenuStructure {
+    title: string;
+    sections: ListSection[];
+}
+
 export interface SendListRequest {
   Phone: string;
   ButtonText: string;
@@ -206,11 +223,12 @@ export interface AdditionalNode {
 }
 
 export interface SendInteractiveRequest {
-  phone: string;
-  message: string;
-  title?: string;
-  footer?: string;
-  buttons?: InteractiveButton[]; // For single menu (backward compatibility)
-  menus?: InteractiveMenu[]; // For multiple menus
-  additionalNodes?: AdditionalNode[];
+    phone: string;
+    message: string;
+    title?: string;
+    footer?: string;
+    buttons?: InteractiveButton[];
+    menus?: InteractiveMenu[];
+    listMenu?: ListMenuStructure;
+    additionalNodes?: AdditionalNode[];
 }
