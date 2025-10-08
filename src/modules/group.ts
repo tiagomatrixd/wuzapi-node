@@ -229,7 +229,7 @@ export class GroupModule extends BaseClient {
     const request: GroupUpdateParticipantsRequest = {
       GroupJID: groupJID,
       Action: action,
-      Participants: participants,
+      Phone: participants,
     };
     return this.post<GroupUpdateParticipantsResponse>(
       "/group/updateparticipants",

@@ -33,7 +33,7 @@ export interface SendTemplateRequest {
 export interface SendAudioRequest {
   Phone: string;
   Audio: string; // base64 encoded
-  PPT?: string; // base64 encoded
+  PPT?: boolean; // base64 encoded
   MimeType?: string;
   ContextInfo?: SimpleContextInfo;
 }
@@ -47,8 +47,10 @@ export interface SendImageRequest {
 
 export interface SendDocumentRequest {
   Phone: string;
-  Document: string; // base64 encoded
+  Document: Buffer | string; // Buffer or file path
   FileName: string;
+  MimeType?: string;
+  Caption?: string;
   ContextInfo?: SimpleContextInfo;
 }
 
@@ -144,11 +146,6 @@ export interface ListItem {
   Title: string;
   Desc?: string;
   RowId: string;
-}
-
-export interface ListSection {
-  Title: string;
-  Rows: ListItem[];
 }
 
 export interface ListRow {

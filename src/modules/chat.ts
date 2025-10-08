@@ -25,6 +25,8 @@ import {
   ListSection,
   SendInteractiveRequest,
 } from "../types/chat.js";
+import { readFileSync } from "fs";
+import FormData from "form-data";
 
 export class ChatModule extends BaseClient {
   /**
@@ -78,11 +80,50 @@ export class ChatModule extends BaseClient {
     request: SendDocumentRequest,
     options?: RequestOptions
   ): Promise<SendMessageResponse> {
-    return this.post<SendMessageResponse>(
+    const form = new FormData();
+
+    form.append('Phone', request.Phone);
+    form.append('FileName', request.FileName);
+
+    let fileBuffer: Buffer;
+    if (typeof request.Document === 'string') {
+      fileBuffer = readFileSync(request.Document);
+    } else {
+      fileBuffer = request.Document;
+    }
+
+    form.append('Document', fileBuffer, {
+      filename: request.FileName,
+      contentType: request.MimeType || 'application/octet-stream'
+    });
+
+    if (request.Caption) {
+      form.append('Caption', request.Caption);
+    }
+
+    if (request.MimeType) {
+      form.append('MimeType', request.MimeType);
+    }
+
+    // For ContextInfo, if needed, but since it's multipart, perhaps serialize
+    // Assuming ContextInfo is optional and can be appended as JSON string if needed
+
+    const token = options?.token || this.config.token;
+    if (!token) {
+      throw new Error("No authentication token provided.");
+    }
+    const headers: Record<string, string> = {
+      ...form.getHeaders(),
+      Token: token,
+    };
+
+    const response = await this.axios.post<SendMessageResponse>(
       "/chat/send/document",
-      request,
-      options
+      form,
+      { headers }
     );
+
+    return response.data;
   }
 
   /**

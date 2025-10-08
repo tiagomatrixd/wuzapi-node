@@ -13,6 +13,7 @@ export default defineConfig({
     }),
   ],
   build: {
+    target: 'node14',
     lib: {
       entry: {
         index: resolve(__dirname, "src/index.ts"),
@@ -30,7 +31,7 @@ export default defineConfig({
       formats: ["cjs"],
     },
     rollupOptions: {
-      external: ["axios"],
+      external: ["axios", "fs", "form-data"],
       output: {
         entryFileNames: "[name].js",
         chunkFileNames: "[name].js",

@@ -161,7 +161,7 @@ export interface GroupInviteInfoResponse {
 export interface GroupUpdateParticipantsRequest {
   GroupJID: string;
   Action: "add" | "remove" | "promote" | "demote";
-  Participants: string[];
+  Phone: string[];
 }
 
 export interface ParticipantUpdate {
