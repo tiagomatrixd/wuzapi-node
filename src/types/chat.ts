@@ -58,8 +58,9 @@ export interface SendVideoRequest {
   Phone: string;
   Video: string; // base64 encoded
   Caption?: string;
-  JpegThumbnail?: string;
+  JPEGThumbnail?: string;
   ContextInfo?: SimpleContextInfo;
+  GifPlayback?: boolean;
 }
 
 export interface SendStickerRequest {
