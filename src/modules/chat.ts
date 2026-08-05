@@ -1,5 +1,5 @@
-import { BaseClient } from "../client.js";
-import { RequestOptions } from "../types/common.js";
+import { BaseClient, WuzapiError } from "../client.js";
+import { RequestOptions, WuzapiResponse } from "../types/common.js";
 import {
   SendMessageResponse,
   SendTextRequest,
@@ -27,7 +27,45 @@ import {
 } from "../types/chat.js";
 import { createReadStream, statSync } from "fs";
 import FormData from "form-data";
-import { DEFAULT_UPLOAD_TIMEOUT_MS } from "../client.js";
+import { DEFAULT_TIMEOUT_MS, DEFAULT_UPLOAD_TIMEOUT_MS } from "../client.js";
+import type { MediaRef } from "../types/chat.js";
+
+/**
+ * A ref is only usable if every identifier is present. A partial ref is
+ * treated as absent so the caller falls back to a normal upload, which always
+ * produces a valid message.
+ */
+export function isCompleteMediaRef(ref?: MediaRef): ref is MediaRef {
+  return (
+    !!ref &&
+    !!ref.URL &&
+    !!ref.DirectPath &&
+    !!ref.MediaKey &&
+    !!ref.FileEncSHA256 &&
+    !!ref.FileSHA256 &&
+    typeof ref.FileLength === "number" &&
+    ref.FileLength > 0
+  );
+}
+
+/**
+ * Unwraps the WuzAPI response envelope.
+ *
+ * sendDocument builds its request by hand (multipart) instead of going through
+ * BaseClient.post, so it has to unwrap the envelope itself. Returning the raw
+ * envelope here would make sendDocument the odd one out among the send methods
+ * — and would hide MediaRef one level deeper than callers expect.
+ */
+function unwrap(envelope: WuzapiResponse<SendMessageResponse>): SendMessageResponse {
+  if (!envelope?.success) {
+    throw new WuzapiError(
+      envelope?.code ?? 0,
+      envelope?.error || "API request failed",
+      envelope
+    );
+  }
+  return envelope.data;
+}
 
 /**
  * Closes a stream that will not be consumed, releasing its file descriptor
@@ -103,6 +141,32 @@ export class ChatModule extends BaseClient {
     form.append("Phone", request.Phone);
     form.append("FileName", request.FileName);
 
+    // A complete MediaRef means the file is already on WhatsApp's servers, so
+    // nothing is read from disk and nothing is uploaded — the request carries
+    // only the identifiers. This is what makes re-sending a large document
+    // cost the same as sending a text message.
+    if (isCompleteMediaRef(request.MediaRef)) {
+      form.append("MediaRef", JSON.stringify(request.MediaRef));
+      if (request.Caption) form.append("Caption", request.Caption);
+      if (request.MimeType) form.append("MimeType", request.MimeType);
+
+      const response = await this.axios.post<WuzapiResponse<SendMessageResponse>>(
+        "/chat/send/document",
+        form,
+        {
+          headers: { ...form.getHeaders(), Token: token },
+          timeout: request.TimeoutMs ?? this.config.timeout ?? DEFAULT_TIMEOUT_MS,
+        }
+      );
+      return unwrap(response.data);
+    }
+
+    if (!request.Document) {
+      throw new Error(
+        "sendDocument requires either Document or a complete MediaRef."
+      );
+    }
+
     // A file path is streamed from disk rather than read into memory.
     //
     // The previous readFileSync meant a 200MB document became a 200MB Buffer,
@@ -112,9 +176,11 @@ export class ChatModule extends BaseClient {
     // Streaming keeps the peak at the stream's own high-water mark.
     let stream: NodeJS.ReadableStream | undefined;
 
-    if (typeof request.Document === "string") {
-      const stats = statSync(request.Document);
-      stream = createReadStream(request.Document, {
+    const document = request.Document;
+
+    if (typeof document === "string") {
+      const stats = statSync(document);
+      stream = createReadStream(document, {
         highWaterMark: 64 * 1024,
       });
       form.append("Document", stream, {
@@ -124,16 +190,16 @@ export class ChatModule extends BaseClient {
         // compute Content-Length — which would undo the streaming entirely.
         knownLength: stats.size,
       });
-    } else if (Buffer.isBuffer(request.Document)) {
-      form.append("Document", request.Document, {
+    } else if (Buffer.isBuffer(document)) {
+      form.append("Document", document, {
         filename: request.FileName,
         contentType,
-        knownLength: request.Document.length,
+        knownLength: document.length,
       });
     } else {
       // Caller-provided stream: length is unknown, so form-data falls back to
       // chunked encoding.
-      stream = request.Document;
+      stream = document;
       form.append("Document", stream, {
         filename: request.FileName,
         contentType,
@@ -157,7 +223,7 @@ export class ChatModule extends BaseClient {
     };
 
     try {
-      const response = await this.axios.post<SendMessageResponse>(
+      const response = await this.axios.post<WuzapiResponse<SendMessageResponse>>(
         "/chat/send/document",
         form,
         {
@@ -184,7 +250,7 @@ export class ChatModule extends BaseClient {
         }
       );
 
-      return response.data;
+      return unwrap(response.data);
     } catch (error) {
       // On failure axios abandons the body mid-flight. An undestroyed read
       // stream keeps its file descriptor and buffers alive until GC — over

@@ -2,10 +2,41 @@ import { SimpleContextInfo } from "./common.js";
 
 // Chat endpoints types
 
+/**
+ * Identifiers WhatsApp returns after a file is uploaded.
+ *
+ * Uploading is the expensive half of sending media. WhatsApp keeps the
+ * encrypted blob on its own servers for roughly 30 days, and a message only
+ * needs these identifiers to point at it — not the bytes. Keep this object and
+ * pass it back as `MediaRef` on a later send to skip the upload entirely.
+ *
+ * Binary fields are base64 strings. Treat the whole object as opaque: store it
+ * and hand it back unchanged.
+ *
+ * Refs do expire. WhatsApp's retention is observed behaviour, not a contract —
+ * when a send with a ref fails, discard it and send the file normally again.
+ */
+export interface MediaRef {
+  URL: string;
+  DirectPath: string;
+  MediaKey: string;
+  FileEncSHA256: string;
+  FileSHA256: string;
+  FileLength: number;
+  Mimetype?: string;
+  JPEGThumbnail?: string;
+}
+
 export interface SendMessageResponse {
   Details: string;
   Id: string;
   Timestamp: string;
+  /**
+   * Present when the send uploaded media. Cache it to skip the upload next
+   * time the same file is sent. Absent for text messages and for sends that
+   * already reused a ref.
+   */
+  MediaRef?: MediaRef;
 }
 
 export interface SendTextRequest {
@@ -32,17 +63,27 @@ export interface SendTemplateRequest {
 
 export interface SendAudioRequest {
   Phone: string;
-  Audio: string; // base64 encoded
+  Audio?: string; // base64 data URI; optional when MediaRef is supplied
   PPT?: boolean; // base64 encoded
   MimeType?: string;
   ContextInfo?: SimpleContextInfo;
+  /**
+   * Reuse a previously uploaded file instead of uploading again. When set and
+   * complete, the `Audio` field is ignored and may be omitted.
+   */
+  MediaRef?: MediaRef;
 }
 
 export interface SendImageRequest {
   Phone: string;
-  Image: string; // base64 encoded
+  Image?: string; // base64 data URI; optional when MediaRef is supplied
   Caption?: string;
   ContextInfo?: SimpleContextInfo;
+  /**
+   * Reuse a previously uploaded file instead of uploading again. When set and
+   * complete, the `Image` field is ignored and may be omitted.
+   */
+  MediaRef?: MediaRef;
 }
 
 export interface SendDocumentRequest {
@@ -52,8 +93,10 @@ export interface SendDocumentRequest {
    *
    * Prefer a path or a stream for large files: a Buffer means the whole file
    * sits in memory, and multipart encoding copies it again.
+   *
+   * Optional when MediaRef is supplied: nothing is read or uploaded then.
    */
-  Document: Buffer | string | NodeJS.ReadableStream;
+  Document?: Buffer | string | NodeJS.ReadableStream;
   FileName: string;
   MimeType?: string;
   Caption?: string;
@@ -62,15 +105,26 @@ export interface SendDocumentRequest {
    * Overrides the client's uploadTimeout for this request (ms).
    */
   TimeoutMs?: number;
+  /**
+   * Reuse a previously uploaded file instead of uploading again. When set and
+   * complete, `Document` is ignored and never read from disk — which is what
+   * makes re-sending a large file cost nothing.
+   */
+  MediaRef?: MediaRef;
 }
 
 export interface SendVideoRequest {
   Phone: string;
-  Video: string; // base64 encoded
+  Video?: string; // base64 data URI; optional when MediaRef is supplied
   Caption?: string;
   JPEGThumbnail?: string;
   ContextInfo?: SimpleContextInfo;
   GifPlayback?: boolean;
+  /**
+   * Reuse a previously uploaded file instead of uploading again. When set and
+   * complete, the `Video` field is ignored and may be omitted.
+   */
+  MediaRef?: MediaRef;
 }
 
 export interface SendStickerRequest {
