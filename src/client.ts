@@ -1,10 +1,60 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
+import http from "http";
+import https from "https";
 import {
   WuzapiConfig,
   WuzapiResponse,
   RequestOptions,
 } from "./types/common.js";
 import { logger } from "./utils/logger.js";
+
+/** Default timeout for regular API calls. */
+export const DEFAULT_TIMEOUT_MS = 60_000;
+
+/** Default timeout for uploads, which are much slower than API calls. */
+export const DEFAULT_UPLOAD_TIMEOUT_MS = 300_000;
+
+const DEFAULT_MAX_SOCKETS = 25;
+
+/**
+ * Connection pools shared by every client instance.
+ *
+ * These are deliberately module-level rather than per-instance. Callers
+ * commonly construct a client per message or per request (one token each),
+ * and per-instance pools would multiply sockets and their buffers without
+ * bound. Sharing them keeps the socket count flat no matter how many
+ * short-lived client objects exist.
+ */
+let sharedHttpAgent: http.Agent | undefined;
+let sharedHttpsAgent: https.Agent | undefined;
+
+function getAgents(maxSockets: number): {
+  httpAgent: http.Agent;
+  httpsAgent: https.Agent;
+} {
+  if (!sharedHttpAgent || !sharedHttpsAgent) {
+    const opts = {
+      keepAlive: true,
+      maxSockets,
+      maxFreeSockets: Math.max(2, Math.floor(maxSockets / 5)),
+      timeout: 65_000,
+    };
+    sharedHttpAgent = new http.Agent(opts);
+    sharedHttpsAgent = new https.Agent(opts);
+  }
+  return { httpAgent: sharedHttpAgent, httpsAgent: sharedHttpsAgent };
+}
+
+/**
+ * Destroys the shared connection pools. Useful on graceful shutdown, or in
+ * tests, so lingering keep-alive sockets do not hold the process open.
+ */
+export function closeSharedAgents(): void {
+  sharedHttpAgent?.destroy();
+  sharedHttpsAgent?.destroy();
+  sharedHttpAgent = undefined;
+  sharedHttpsAgent = undefined;
+}
 
 export class WuzapiError extends Error {
   public code: number;
@@ -27,8 +77,19 @@ export class BaseClient {
 
   constructor(config: WuzapiConfig) {
     this.config = config;
+
+    const { httpAgent, httpsAgent } = getAgents(
+      config.maxSockets ?? DEFAULT_MAX_SOCKETS
+    );
+
     this.axios = axios.create({
       baseURL: config.apiUrl,
+      // A request with no timeout never fails — it just holds its socket and
+      // closure forever if the server goes silent. That is a memory leak with
+      // no error to trace it back to.
+      timeout: config.timeout ?? DEFAULT_TIMEOUT_MS,
+      httpAgent,
+      httpsAgent,
       headers: {
         "Content-Type": "application/json",
       },
@@ -47,7 +108,19 @@ export class BaseClient {
             data
           );
         } else if (error.request) {
-          // Request was made but no response received
+          // Request was made but no response received. Separate the timeout
+          // case: reporting it as a generic network error hides the fact that
+          // the server accepted the connection and then went silent, which is
+          // the failure that actually needs investigating.
+          if (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") {
+            throw new WuzapiError(
+              408,
+              `Request timed out after ${error.config?.timeout ?? "?"}ms: ${
+                error.config?.url ?? "unknown endpoint"
+              }`,
+              { code: error.code }
+            );
+          }
           throw new WuzapiError(0, "Network error: No response from server");
         } else {
           // Something else happened

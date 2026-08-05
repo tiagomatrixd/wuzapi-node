@@ -72,6 +72,10 @@ await client.session.pairPhone("5491155554444");
 interface WuzapiConfig {
   apiUrl: string; // Your WuzAPI server URL
   token?: string; // Authentication token (can be provided per request)
+
+  timeout?: number; // Request timeout in ms (default: 60000)
+  uploadTimeout?: number; // Timeout for file uploads in ms (default: 300000)
+  maxSockets?: number; // Max concurrent sockets per host (default: 25)
 }
 
 // Global token approach
@@ -90,6 +94,39 @@ await client.chat.sendText(
   { Phone: "123", Body: "Hello" },
   { token: "user-specific-token" }
 );
+```
+
+### Timeouts
+
+Every request has a timeout. Without one, a request to an unresponsive server
+never settles: its promise, closures and socket stay alive indefinitely, and a
+long-running process slowly accumulates them until it runs out of memory —
+with no error to trace the cause back to.
+
+Timeouts surface as a `WuzapiError` with `code: 408`:
+
+```typescript
+try {
+  await client.chat.sendText({ Phone: "123", Body: "Hello" });
+} catch (err) {
+  if (err.code === 408) {
+    // server accepted the connection but never answered
+  }
+}
+```
+
+### Connection pooling
+
+All client instances share one keep-alive connection pool. Creating a client
+per message or per token is therefore cheap and will not multiply sockets.
+
+On graceful shutdown, close the pool so lingering sockets do not hold the
+process open:
+
+```typescript
+import { closeSharedAgents } from "wuzapi";
+
+process.on("SIGTERM", () => closeSharedAgents());
 ```
 
 ## 💬 Essential Chat Operations
@@ -397,11 +434,26 @@ await client.chat.sendVideo({
   Caption: "Video caption",
 });
 
-// Send document
+// Send document — unlike the other media methods, this one takes a file path,
+// a Buffer or a readable stream (NOT a base64 data URI).
+//
+// Prefer a path: the file is streamed from disk, so peak memory stays flat
+// no matter how large it is. A Buffer means the whole file sits in memory and
+// the multipart encoding copies it again.
 await client.chat.sendDocument({
   Phone: "5491155554444",
-  Document: "data:application/pdf;base64,JVBERi0x...",
+  Document: "/path/to/document.pdf", // streamed, constant memory
   FileName: "document.pdf",
+  MimeType: "application/pdf",
+});
+
+// Buffer and stream also work
+await client.chat.sendDocument({
+  Phone: "5491155554444",
+  Document: fs.createReadStream("/path/to/big.apk"),
+  FileName: "big.apk",
+  MimeType: "application/vnd.android.package-archive",
+  TimeoutMs: 600000, // override uploadTimeout for this send
 });
 
 // Send sticker

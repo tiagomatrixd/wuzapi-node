@@ -31,7 +31,7 @@ export default defineConfig({
       formats: ["cjs"],
     },
     rollupOptions: {
-      external: ["axios", "fs", "form-data"],
+      external: ["axios", "fs", "form-data", "http", "https", "stream"],
       output: {
         entryFileNames: "[name].js",
         chunkFileNames: "[name].js",

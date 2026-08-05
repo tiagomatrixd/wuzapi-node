@@ -11,6 +11,19 @@ export default [
         ecmaVersion: 2020,
         sourceType: "module",
       },
+      // This library targets Node (it uses fs, http and Buffer). Without these
+      // globals, no-undef flags every Node type and `npm run lint` fails —
+      // which also blocks prepublishOnly.
+      globals: {
+        Buffer: "readonly",
+        NodeJS: "readonly",
+        process: "readonly",
+        console: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+      },
     },
     plugins: {
       "@typescript-eslint": typescript,

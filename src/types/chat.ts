@@ -47,11 +47,21 @@ export interface SendImageRequest {
 
 export interface SendDocumentRequest {
   Phone: string;
-  Document: Buffer | string; // Buffer or file path
+  /**
+   * File path (streamed from disk), a Buffer, or a readable stream.
+   *
+   * Prefer a path or a stream for large files: a Buffer means the whole file
+   * sits in memory, and multipart encoding copies it again.
+   */
+  Document: Buffer | string | NodeJS.ReadableStream;
   FileName: string;
   MimeType?: string;
   Caption?: string;
   ContextInfo?: SimpleContextInfo;
+  /**
+   * Overrides the client's uploadTimeout for this request (ms).
+   */
+  TimeoutMs?: number;
 }
 
 export interface SendVideoRequest {

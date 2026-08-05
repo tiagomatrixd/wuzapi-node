@@ -4,6 +4,30 @@ export interface WuzapiConfig {
   apiUrl: string;
   token?: string;
   debug?: boolean;
+
+  /**
+   * Timeout (ms) for regular requests. Defaults to 60000.
+   *
+   * Without a timeout axios waits forever. If the WuzAPI server stops
+   * responding, every pending call keeps its promise, closures and socket
+   * alive — the caller slowly accumulates dead requests until it runs out of
+   * memory, with no error ever surfacing.
+   *
+   * Set to 0 to disable (not recommended).
+   */
+  timeout?: number;
+
+  /**
+   * Timeout (ms) for file uploads, which are far slower than API calls.
+   * Defaults to 300000 (5 min).
+   */
+  uploadTimeout?: number;
+
+  /**
+   * Max concurrent sockets per host for the shared connection pool.
+   * Defaults to 25.
+   */
+  maxSockets?: number;
 }
 
 export interface RequestOptions {

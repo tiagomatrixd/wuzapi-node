@@ -4,6 +4,13 @@ export { WuzapiClient } from "./wuzapi-client.js";
 // Error classes
 export { WuzapiError } from "./client.js";
 
+// Connection pool control and timeout defaults
+export {
+  closeSharedAgents,
+  DEFAULT_TIMEOUT_MS,
+  DEFAULT_UPLOAD_TIMEOUT_MS,
+} from "./client.js";
+
 // All types
 export * from "./types/index.js";
 
