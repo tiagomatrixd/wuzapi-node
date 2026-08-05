@@ -115,6 +115,50 @@ try {
 }
 ```
 
+### Reusing uploads (MediaRef)
+
+Uploading is the expensive half of sending media. WhatsApp keeps the encrypted
+blob on its own servers for roughly 30 days, and a message only needs a handful
+of identifiers to point at it — not the bytes.
+
+Media sends return those identifiers as `MediaRef`. Store it, pass it back, and
+the next send skips the download, the base64 encoding and the upload entirely:
+
+```typescript
+// First send: uploads, and hands back the ref
+const sent = await client.chat.sendAudio({
+  Phone: "5491155554444",
+  Audio: "data:audio/mpeg;base64,...",
+});
+await myCache.set(songId, sent.MediaRef);
+
+// Later sends: no file needed at all
+const ref = await myCache.get(songId);
+await client.chat.sendAudio({ Phone: "5491155554444", MediaRef: ref });
+```
+
+Works the same for `sendImage`, `sendVideo` and `sendDocument`. For documents,
+a ref means the file is never opened — re-sending a 200MB APK costs the same as
+a text message.
+
+Cache the ref against something that identifies the *content*, so a changed file
+invalidates it: a YouTube video ID for a song, or mtime+size for a file on disk.
+
+**Refs expire.** The ~30 day retention is observed behaviour, not a contract.
+Always be ready to fall back:
+
+```typescript
+try {
+  await client.chat.sendAudio({ Phone, MediaRef: ref });
+} catch {
+  await myCache.delete(songId);
+  await client.chat.sendAudio({ Phone, Audio: dataUri }); // upload again
+}
+```
+
+Requires a WuzAPI server with MediaRef support. Against an older server the
+field is ignored and sends behave exactly as before.
+
 ### Connection pooling
 
 All client instances share one keep-alive connection pool. Creating a client
